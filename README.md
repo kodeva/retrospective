@@ -24,11 +24,11 @@ N/A
 
 Planned Use Cases
 -----------------
-* User creates, removes and sees his local card desks.
-* User adds, removes and sees cards to/from/on his local card desks.
-* User modifies a front-side text on a card on his local card desks.
-* User creates a new session with a new pinwall, connects a local desk to the session and becomes the session participant.
-* User gets invitation from the session participant, joins the session, connects a local card desk to the session and becomes the session participant.
+*User creates, removes and sees his local card desks.
+*User adds, removes and sees cards to/from/on his local card desks.
+*User modifies a front-side text on a card on his local card desks.
+*User creates a new session with a new pinwall, connects a local desk to the session and becomes the session participant.
+*User gets invitation from the session participant, joins the session, connects a local card desk to the session and becomes the session participant.
 
 * Session participant invites other users to join the session.
 * Session participant moves a card from the local card desk to the session pinwall.
