@@ -1,5 +1,6 @@
 Retrospective
 =============
+By Stepan Hrbacek, Kodeva 
 
 Client-server tool for performing and documenting retrospective sessions (Scrum/Agile) in distributed teams.
 
