@@ -9,16 +9,8 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>retrospective.model</artifactId>
+    <artifactId>retrospective.messaging</artifactId>
     <packaging>jar</packaging>
 
-    <name>Kodeva Retrospective Model</name> 
-
-    <dependencies>
-        <dependency>
-            <groupId>kodeva.retrospective</groupId>
-            <artifactId>retrospective.messaging</artifactId>
-	    	<version>${project.version}</version>
-        </dependency>
-    </dependencies>
+    <name>Kodeva Retrospective Messaging</name> 
 </project>

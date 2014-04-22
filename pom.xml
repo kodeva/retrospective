@@ -16,6 +16,7 @@
 
     <modules>
         <module>retrospective.client</module>
+        <module>retrospective.messaging</module>
         <module>retrospective.model</module>
         <module>retrospective.server</module>
     </modules>
