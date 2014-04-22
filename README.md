@@ -4,12 +4,14 @@ By Stepan Hrbacek, Kodeva
 
 Client-server tool for performing and documenting retrospective sessions (Scrum/Agile) in distributed teams.
 
+
 Terms
 -----
 * Session is the retrospective session.
 * Card is 2-sided retrospective card with a mandatory feedback text on the front side; and optionally votes, issue analysis and action items on the back side. Cards can be of either Well-Done or Improvement type.
 * User card desk is a container for cards visible to the User only.
 * Pinwall is a Session container for cards visible to all Session participants of given Session.
+
 
 Actors - roles
 --------------
@@ -18,9 +20,11 @@ Actors - roles
 * User is anyone using the Client.
 * Session participant is a user connected to the Session.
 
+
 Supported Use Cases
 -------------------
 N/A
+
 
 Planned Use Cases
 -----------------
