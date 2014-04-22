@@ -11,7 +11,7 @@ Terms
 * Pinwall is a Session container for cards visible to all Session participants of given Session.
 
 
-Actors - roles
+Actors - Roles
 --------------
 * Client is the client part of this retrospective tool.
 * Server is the server part of this retrospective tool.
