@@ -2,6 +2,7 @@ Client-server tool for performing and documenting retrospective sessions (Scrum/
 ===========================================================================================================
 By Stepan Hrbacek, Kodeva 
 
+
 Terms
 -----
 * Session is the retrospective session.
