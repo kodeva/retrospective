@@ -4,33 +4,27 @@ import javafx.beans.property.DoubleProperty;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.FlowPane;
-import kodeva.retrospective.controller.Controller;
-import kodeva.retrospective.model.PinWall;
-import kodeva.retrospective.model.Card.Type;
+import kodeva.retrospective.messaging.MessageBroker;
+import kodeva.retrospective.model.entity.Card;
+import kodeva.retrospective.view.Card.Builder;
 
-public class WentWellArea {
+public class WentWellArea extends AbstractCardArea  {
 	private final ScrollPane cardsWentWellAreaScrolled;
-	private final FlowPane cardsWentWellArea;
-	private final PinWall pinWall;
-	private final Controller controller;
 
-	public WentWellArea(PinWall pinWall, Controller controller) {
-		this.pinWall = pinWall;
-		this.controller = controller;
+	public WentWellArea(MessageBroker messageBroker) {
+		super(messageBroker);
 		
 		cardsWentWellAreaScrolled = new ScrollPane();
-		cardsWentWellArea = new FlowPane();
 
-		cardsWentWellAreaScrolled.setContent(cardsWentWellArea);
-		cardsWentWellArea.prefWidthProperty().bind(
+		cardsWentWellAreaScrolled.setContent(cardsUIContainer);
+		cardsUIContainer.prefWidthProperty().bind(
 				cardsWentWellAreaScrolled.widthProperty());
-		cardsWentWellArea.prefHeightProperty().bind(
+		cardsUIContainer.prefHeightProperty().bind(
 				cardsWentWellAreaScrolled.heightProperty());
-		cardsWentWellArea.setVgap(5);
-		cardsWentWellArea.setHgap(5);
-		cardsWentWellArea.setStyle("-fx-background-color: #AFFFAF;");
-		cardsWentWellArea.setPadding(new Insets(2));
+		cardsUIContainer.setVgap(5);
+		cardsUIContainer.setHgap(5);
+		cardsUIContainer.setStyle("-fx-background-color: #AFFFAF;");
+		cardsUIContainer.setPadding(new Insets(2));
 	}
 
 	public Node getNode() {
@@ -44,14 +38,9 @@ public class WentWellArea {
 	public DoubleProperty prefHeightProperty() {
 		return cardsWentWellAreaScrolled.prefHeightProperty();
 	}
-	
-	public void refresh() {
-		cardsWentWellArea.getChildren().clear();
-		for (kodeva.retrospective.model.Card card : pinWall.getCards()) {
-			if (Type.WentWell == card.getType()) {
-				Card cardVisual = new Card.Builder().card(card).editable(false).controller(controller).build();
-				cardsWentWellArea.getChildren().add(cardVisual.getNode());
-			}
-		}
+
+	@Override
+	public Builder createCardBuilder(Card card) {
+		return super.createCardBuilder(card).editable(false);
 	}
 }

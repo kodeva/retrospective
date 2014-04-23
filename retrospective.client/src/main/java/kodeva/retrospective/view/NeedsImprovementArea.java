@@ -4,33 +4,25 @@ import javafx.beans.property.DoubleProperty;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.FlowPane;
-import kodeva.retrospective.controller.Controller;
-import kodeva.retrospective.model.Card.Type;
-import kodeva.retrospective.model.Model;
+import kodeva.retrospective.messaging.MessageBroker;
 
-public class NeedsImprovementArea {
+public class NeedsImprovementArea extends AbstractCardArea {
 	private final ScrollPane cardsNeedsImprovementAreaScrolled;
-	private final FlowPane cardsNeedsImprovementArea;
-	private final Model model;
-	private final Controller controller;
 	
-	public NeedsImprovementArea(Model model, Controller controller) {
-		this.model = model;
-		this.controller = controller;
+	public NeedsImprovementArea(MessageBroker messageBroker) {
+		super(messageBroker);
 		
 		cardsNeedsImprovementAreaScrolled = new ScrollPane();
-		cardsNeedsImprovementArea = new FlowPane();
 
-		cardsNeedsImprovementAreaScrolled.setContent(cardsNeedsImprovementArea);
-		cardsNeedsImprovementArea.prefWidthProperty().bind(
+		cardsNeedsImprovementAreaScrolled.setContent(cardsUIContainer);
+		cardsUIContainer.prefWidthProperty().bind(
 				cardsNeedsImprovementAreaScrolled.widthProperty());
-		cardsNeedsImprovementArea.prefHeightProperty().bind(
+		cardsUIContainer.prefHeightProperty().bind(
 				cardsNeedsImprovementAreaScrolled.heightProperty());
-		cardsNeedsImprovementArea.setVgap(5);
-		cardsNeedsImprovementArea.setHgap(5);
-		cardsNeedsImprovementArea.setStyle("-fx-background-color: #FFFF5F;");
-		cardsNeedsImprovementArea.setPadding(new Insets(2));
+		cardsUIContainer.setVgap(5);
+		cardsUIContainer.setHgap(5);
+		cardsUIContainer.setStyle("-fx-background-color: #FFFF5F;");
+		cardsUIContainer.setPadding(new Insets(2));
 	}
 	
 	public Node getNode() {
@@ -45,14 +37,8 @@ public class NeedsImprovementArea {
 		return cardsNeedsImprovementAreaScrolled.prefHeightProperty();
 	}
 
-	public void refresh() {
-		cardsNeedsImprovementArea.getChildren().clear();
-		for (kodeva.retrospective.model.Card card : model.getPinWall().getCards()) {
-			if (Type.NeedsImprovement == card.getType()) {
-				Card cardVisual = new Card.Builder().card(card).editable(false).controller(controller)
-						.userDesk(model.getUserDesk()).build();
-				cardsNeedsImprovementArea.getChildren().add(cardVisual.getNode());
-			}
-		}
+	@Override
+	public Card.Builder createCardBuilder(kodeva.retrospective.model.entity.Card card) {
+		return super.createCardBuilder(card).editable(false);
 	}
 }

@@ -1,11 +1,12 @@
 package kodeva.retrospective.view;
 
+import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.layout.VBox;
-import kodeva.retrospective.controller.Controller;
-import kodeva.retrospective.model.Model;
+import kodeva.retrospective.messaging.MessageBroker;
+import kodeva.retrospective.model.entity.Card;
 
 public class View {
 	private final VBox feedback;
@@ -13,26 +14,26 @@ public class View {
 	private final WentWellArea wentWellArea;
 	private final NeedsImprovementArea needsImprovementArea; 
 
-	public View(Model model, Controller controller) {
+	public View(MessageBroker messageBroker) {
 		feedback = new VBox();
 		feedback.setPadding(new Insets(2));
 		feedback.setSpacing(3);
 
-		final ButtonMenu menu = new ButtonMenu(controller);
+		final ButtonMenu menu = new ButtonMenu(messageBroker);
 		menu.prefWidthProperty().bind(feedback.widthProperty());
 		feedback.getChildren().add(menu.getNode());
 
-		editArea = new EditArea(model, controller);
+		editArea = new EditArea(messageBroker);
 		feedback.getChildren().add(editArea.getNode());
 		editArea.prefWidthProperty().bind(feedback.widthProperty());
 		editArea.prefHeightProperty().bind(feedback.heightProperty());
 
-		wentWellArea = new WentWellArea(model.getPinWall(), controller);
+		wentWellArea = new WentWellArea(messageBroker);
 		feedback.getChildren().add(wentWellArea.getNode());
 		wentWellArea.prefWidthProperty().bind(feedback.widthProperty());
 		wentWellArea.prefHeightProperty().bind(feedback.heightProperty());
 
-		needsImprovementArea = new NeedsImprovementArea(model, controller);
+		needsImprovementArea = new NeedsImprovementArea(messageBroker);
 		feedback.getChildren().add(needsImprovementArea.getNode());
 		needsImprovementArea.prefWidthProperty().bind(feedback.widthProperty());
 		needsImprovementArea.prefHeightProperty().bind(feedback.heightProperty());
@@ -50,21 +51,142 @@ public class View {
 		return feedback.prefHeightProperty();
 	}
 
-	public EditArea getEditArea() {
-		return editArea;
+	/**
+	 * Create a new card on user desk.
+	 * @param card
+	 *  card instance
+	 */
+	public void createCardOnUserDesk(final Card card) {
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				editArea.createCard(card);
+			}
+		});
+	}
+	
+	/**
+	 * Delete the card from user desk.
+	 * @param card
+	 *  card instance
+	 */
+	public void deleteCardFromUserDesk(final Card card) {
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				editArea.deleteCard(card);
+			}
+		});
+	}
+	
+	/**
+	 * Updates the card on user desk.
+	 * @param card
+	 *  card instance
+	 */
+	public void updateCardOnUserDesk(final Card card) {
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				editArea.updateCard(card);
+			}
+		});
 	}
 
-	public WentWellArea getWentWellArea() {
-		return wentWellArea;
+	/**
+	 * Create a new card on pin wall.
+	 * @param card
+	 *  card instance
+	 */
+	public void createCardOnPinWall(final Card card) {
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				switch (card.getType()) {
+				case WentWell:
+					wentWellArea.createCard(card);
+					break;
+				case NeedsImprovement:
+					needsImprovementArea.createCard(card);
+					break;
+				}
+			}
+		});
 	}
 
-	public NeedsImprovementArea getNeedsImprovementArea() {
-		return needsImprovementArea;
+	/**
+	 * Delete the card from pin wall.
+	 * @param card
+	 *  card instance
+	 */
+	public void deleteCardFromPinWall(final Card card) {
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				switch (card.getType()) {
+				case WentWell:
+					wentWellArea.deleteCard(card);
+					break;
+				case NeedsImprovement:
+					needsImprovementArea.deleteCard(card);
+					break;
+				}
+			}
+		});
+	}
+	
+	/**
+	 * Updates the card on pin wall.
+	 * @param card
+	 *  card instance
+	 */
+	public void updateCardOnPinWall(final Card card) {
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				switch (card.getType()) {
+				case WentWell:
+					wentWellArea.updateCard(card);
+					break;
+				case NeedsImprovement:
+					needsImprovementArea.updateCard(card);
+					break;
+				}
+			}
+		});
 	}
 
-	public void refresh() {
-		editArea.refresh();
-		wentWellArea.refresh();
-		needsImprovementArea.refresh();
+	/**
+	 * Sets count of own votes assigned to the card.
+	 * @param card
+	 *  card instance
+	 * @param votesCount
+	 *  count of own votes
+	 */
+	public final void setVoteCountOwn(final kodeva.retrospective.model.entity.Card card, final int votesCount) {
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				editArea.setVoteCountOwn(card, votesCount);
+				needsImprovementArea.setVoteCountOwn(card, votesCount);
+			}
+		});
+	}
+
+	/**
+	 * Sets total count of votes assigned to the card.
+	 * @param card
+	 *  card instance
+	 * @param votesCount
+	 *  count of own votes
+	 */
+	public final void setVoteCountTotal(final kodeva.retrospective.model.entity.Card card, final int votesCount) {
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				editArea.setVoteCountTotal(card, votesCount);
+				needsImprovementArea.setVoteCountTotal(card, votesCount);
+			}
+		});
 	}
 }

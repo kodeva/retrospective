@@ -3,23 +3,12 @@ package kodeva.retrospective;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import kodeva.retrospective.controller.Controller;
-import kodeva.retrospective.model.Model;
-import kodeva.retrospective.view.ModelChangeCallbackImpl;
+import kodeva.retrospective.controller.LocalController;
+import kodeva.retrospective.messaging.MessageBroker;
 import kodeva.retrospective.view.View;
 
 /**
- * @author Stepan Hrbacek
- * 
- * TODO:
- * - Udedat Model immutable (vracet kopie seznamu karet).
- * - Udelat needitovatelne karty (na PinWall) citelnejsi - kotrast pozadi a pisma.
- * - Pridat metody pro modifikace Modelu (pro snadne navazani externi ukladani).
- * - Implementovat equals() trid modelu zalozene na externim id (Card, Vote, UserDesk, ...).
- * - Vlakno pro aktualizaci lokalni Model instance (PinWall) ze site.
- * - Ukladani UserDesk pri kazde aktualizaci na disk a jeho nacteni pri startu aplikace.
- * - Vytvoreni vysledneho reportu z retrospektivy (PinWall v PDF/PNG).
- * - Udelat externi rozhranni Modelu Observable tak, aby se UI prekreslilo automaticky.
+ * Retrospective client based on JavaFX.
  */
 public class UI extends Application {
 	public static void main(String[] args) {
@@ -28,12 +17,9 @@ public class UI extends Application {
 
 	@Override
 	public void start(final Stage primaryStage) {
-		final Model model = new Model();
-		final ModelChangeCallbackImpl modelChangeCallback = new ModelChangeCallbackImpl();
-		final Controller controller = new Controller(model, modelChangeCallback);
-		final View view = new View(model, controller);
-		modelChangeCallback.setView(view);
-		view.refresh();
+		final MessageBroker messageBroker = new MessageBroker();
+		final View view = new View(messageBroker);
+		new LocalController(messageBroker, view);
 
 		primaryStage.setTitle("Retrospective Feedback");
 		primaryStage.setWidth(800);

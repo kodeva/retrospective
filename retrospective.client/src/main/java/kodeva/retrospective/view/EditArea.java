@@ -4,31 +4,23 @@ import javafx.beans.property.DoubleProperty;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.FlowPane;
-import kodeva.retrospective.controller.Controller;
-import kodeva.retrospective.model.Card.Type;
-import kodeva.retrospective.model.Model;
+import kodeva.retrospective.messaging.MessageBroker;
 
-public class EditArea {
+public class EditArea extends AbstractCardArea {
 	private final ScrollPane cardsEditAreaScrolled;
-	private final FlowPane cardsEditArea;
-	private final Model model;
-	private final Controller controller;
 
-	public EditArea(Model model, Controller controller) {
-		this.model = model;
-		this.controller = controller;
+	public EditArea(MessageBroker messageBroker) {
+		super(messageBroker);
 
-		cardsEditArea = new FlowPane();
 		cardsEditAreaScrolled = new ScrollPane();
-		cardsEditAreaScrolled.setContent(cardsEditArea);
-		cardsEditArea.prefWidthProperty().bind(
+		cardsEditAreaScrolled.setContent(cardsUIContainer);
+		cardsUIContainer.prefWidthProperty().bind(
 				cardsEditAreaScrolled.widthProperty());
-		cardsEditArea.prefHeightProperty().bind(
+		cardsUIContainer.prefHeightProperty().bind(
 				cardsEditAreaScrolled.heightProperty());
-		cardsEditArea.setVgap(5);
-		cardsEditArea.setHgap(5);
-		cardsEditArea.setPadding(new Insets(2));
+		cardsUIContainer.setVgap(5);
+		cardsUIContainer.setHgap(5);
+		cardsUIContainer.setPadding(new Insets(2));
 	}
 
 	public Node getNode() {
@@ -43,15 +35,9 @@ public class EditArea {
 		return cardsEditAreaScrolled.prefHeightProperty();
 	}
 
-	public void refresh() {
-		cardsEditArea.getChildren().clear();
-
-		for (kodeva.retrospective.model.Card card : model.getUserDesk().getCards()) {
-			Card.Builder cardBuilder = new Card.Builder().card(card).editable(true).controller(controller);
-			if (Type.NeedsImprovement == card.getType()) {
-				cardBuilder.userDesk(model.getUserDesk());
-			}
-			cardsEditArea.getChildren().add(cardBuilder.build().getNode());
-		}
+	@Override
+	public Card.Builder createCardBuilder(kodeva.retrospective.model.entity.Card card) {
+		Card.Builder builder = super.createCardBuilder(card).editable(true);
+		return builder;
 	}
 }

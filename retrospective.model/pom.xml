@@ -18,7 +18,12 @@
         <dependency>
             <groupId>kodeva.retrospective</groupId>
             <artifactId>retrospective.messaging</artifactId>
-	    	<version>${project.version}</version>
+	    <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>kodeva.retrospective</groupId>
+            <artifactId>retrospective.model.entity</artifactId>
+    	    <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>

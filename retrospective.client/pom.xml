@@ -30,10 +30,34 @@
             <groupId>javafx</groupId>
             <artifactId>jfxrt</artifactId>
         </dependency>
+
         <dependency>
             <groupId>javax.websocket</groupId>
-            <artifactId>javax.websocket-client-api</artifactId>
+            <artifactId>javax.websocket-api</artifactId>
         </dependency>
+
+	    <dependency>
+	        <groupId>junit</groupId>
+	        <artifactId>junit</artifactId>
+	    </dependency>
+
+		<dependency>
+			<groupId>org.glassfish.tyrus</groupId>
+			<artifactId>tyrus-client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.tyrus</groupId>
+			<artifactId>tyrus-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.tyrus</groupId>
+			<artifactId>tyrus-container-grizzly-server</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
+		</dependency>
     </dependencies>
 
     <build>
