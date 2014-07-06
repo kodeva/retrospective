@@ -69,6 +69,5 @@ public class LocalControllerTest {
 	
 	@Test
 	public void startSession() {
-	
 	}
 }
