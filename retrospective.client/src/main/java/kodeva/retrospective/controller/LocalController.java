@@ -4,6 +4,7 @@ import kodeva.retrospective.messaging.Message;
 import kodeva.retrospective.messaging.MessageBroker;
 import kodeva.retrospective.messaging.MessageFilter;
 import kodeva.retrospective.messaging.MessageProcessor;
+import kodeva.retrospective.model.Constants;
 import kodeva.retrospective.model.EntityMessageAdapter;
 import kodeva.retrospective.model.Model;
 import kodeva.retrospective.model.entity.Card;
@@ -35,7 +36,7 @@ public class LocalController implements MessageProcessor {
 			switch (message.getValues(kodeva.retrospective.view.Constants.Messaging.Key.EVENT).iterator().next()) {
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_SESSION_CONNECT:
 				if ((clientController == null) && (serverController == null)) {
-					clientController = new ClientController(messageBroker);
+					clientController = new ClientController(messageBroker, model);
 				}
 				break;
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_SESSION_DISCONNECT:
@@ -79,9 +80,13 @@ public class LocalController implements MessageProcessor {
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_ADD:
 				view.createCardOnUserDesk(EntityMessageAdapter.toCardBuilder(message).build());
 				break;
-			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_DELETE:
-				view.deleteCardFromUserDesk(EntityMessageAdapter.toCardBuilder(message).build());
+			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_DELETE: {
+				final String userDeskId = message.getValues(Constants.Messaging.Key.USER_DESK_ID).iterator().next();
+				if (model.getUserDesk().getId().equals(userDeskId)) {
+					view.deleteCardFromUserDesk(EntityMessageAdapter.toCardBuilder(message).build());
+				}
 				break;
+			}
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_UPDATE:
 				final String containerType = message.getValues(kodeva.retrospective.model.Constants.Messaging.Key.CARD_CONTAINER_TYPE).iterator().next();
 				switch (containerType) {
@@ -95,7 +100,10 @@ public class LocalController implements MessageProcessor {
 				break;
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_PUBLISH: {
 				final Card card = EntityMessageAdapter.toCardBuilder(message).build();
-				view.deleteCardFromUserDesk(card);
+				final String userDeskId = message.getValues(Constants.Messaging.Key.USER_DESK_ID).iterator().next();
+				if (model.getUserDesk().getId().equals(userDeskId)) {
+					view.deleteCardFromUserDesk(card);
+				}
 				view.createCardOnPinWall(card);
 				view.setVoteCountOwn(card, model.getVotesCountTotal(card));
 				view.setVoteCountTotal(card, model.getVotesCountTotal(card));

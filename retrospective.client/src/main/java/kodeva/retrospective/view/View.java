@@ -163,7 +163,7 @@ public class View {
 	 * @param votesCount
 	 *  count of own votes
 	 */
-	public final void setVoteCountOwn(final kodeva.retrospective.model.entity.Card card, final int votesCount) {
+	public void setVoteCountOwn(final kodeva.retrospective.model.entity.Card card, final int votesCount) {
 		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
@@ -180,7 +180,7 @@ public class View {
 	 * @param votesCount
 	 *  count of own votes
 	 */
-	public final void setVoteCountTotal(final kodeva.retrospective.model.entity.Card card, final int votesCount) {
+	public void setVoteCountTotal(final kodeva.retrospective.model.entity.Card card, final int votesCount) {
 		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {

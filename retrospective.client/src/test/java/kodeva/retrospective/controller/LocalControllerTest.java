@@ -17,57 +17,81 @@ import org.junit.Test;
 
 public class LocalControllerTest {
 	
-	private MessageBroker messageBroker;
-	private View view;
+	private MessageBroker orgMessageBroker, partMessageBroker;
+	private View orgView, partView;
+	private Card orgWentWellCard, partNeedsImprovementCard;
 
 	@Before
 	public void beforeTest() {
-		messageBroker = new MessageBroker();
-		view = mock(View.class);
-		new LocalController(messageBroker, view);
+		orgMessageBroker = new MessageBroker();
+		orgView = mock(View.class);
+		new LocalController(orgMessageBroker, orgView);
+
+		partMessageBroker = new MessageBroker();
+		partView = mock(View.class);
+		new LocalController(partMessageBroker, partView);
 	}
 
 	@Test
 	public void addNewWellDoneCard() {
-		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		orgMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_CREATE_WENT_WELL)).build());
-		verify(view).createCardOnUserDesk(argThat(new CardDeepWithoutIdMatcher(new Card.Builder().type(Type.WentWell).build())));
+		final CardDeepWithoutIdMatcher cardMatcher = new CardDeepWithoutIdMatcher(new Card.Builder().type(Type.WentWell).build());
+		verify(orgView).createCardOnUserDesk(argThat(cardMatcher));
+		orgWentWellCard = cardMatcher.getLastComparedCard();
 	}
 
 	@Test
 	public void addNewImprovementCard() {
-		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		partMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_CREATE_NEEDS_IMPROVEMENT)).build());
-		verify(view).createCardOnUserDesk(argThat(new CardDeepWithoutIdMatcher(new Card.Builder().type(Type.NeedsImprovement).build())));
+		final CardDeepWithoutIdMatcher cardMatcher = new CardDeepWithoutIdMatcher(new Card.Builder().type(Type.NeedsImprovement).build());
+		verify(partView).createCardOnUserDesk(argThat(cardMatcher));
+		partNeedsImprovementCard = cardMatcher.getLastComparedCard();
 	}
 
 	@Test
 	public void removeWellDoneCard() {
-		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
-				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_CREATE_WENT_WELL)).build());
-		final CardDeepWithoutIdMatcher cardMatcher = new CardDeepWithoutIdMatcher(new Card.Builder().type(Type.WentWell).build());
-		verify(view).createCardOnUserDesk(argThat(cardMatcher));
-
-		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		addNewWellDoneCard();
+		orgMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
-				.entries(EntityMessageAdapter.toMessageEntries(cardMatcher.getLastComparedCard())).build());
-		verify(view).deleteCardFromUserDesk(cardMatcher.getLastComparedCard());
+				.entries(EntityMessageAdapter.toMessageEntries(orgWentWellCard)).build());
+		verify(orgView).deleteCardFromUserDesk(orgWentWellCard);
 	}
 
 	@Test
 	public void removeImprovementCard() {
-		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
-				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_CREATE_NEEDS_IMPROVEMENT)).build());
-		final CardDeepWithoutIdMatcher cardMatcher = new CardDeepWithoutIdMatcher(new Card.Builder().type(Type.NeedsImprovement).build());
-		verify(view).createCardOnUserDesk(argThat(cardMatcher));
-
-		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		addNewImprovementCard();
+		partMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
-				.entries(EntityMessageAdapter.toMessageEntries(cardMatcher.getLastComparedCard())).build());
-		verify(view).deleteCardFromUserDesk(cardMatcher.getLastComparedCard());
+				.entries(EntityMessageAdapter.toMessageEntries(partNeedsImprovementCard)).build());
+		verify(partView).deleteCardFromUserDesk(partNeedsImprovementCard);
 	}
 	
 	@Test
-	public void startSession() {
+	public void postWellDoneCard() {
+		addNewWellDoneCard();
+		orgMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_START)).build());
+		addNewImprovementCard();
+		partMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_CONNECT)).build());
+		
+		orgMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_POSTIT))
+				.entries(EntityMessageAdapter.toMessageEntries(orgWentWellCard)).build());
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+		}
+		verify(orgView).deleteCardFromUserDesk(orgWentWellCard);
+		verify(orgView).createCardOnPinWall(orgWentWellCard);
+		verify(partView, never()).deleteCardFromUserDesk((Card) any());
+		verify(partView).createCardOnPinWall(orgWentWellCard);
+		
+		partMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_DISCONNECT)).build());
+		orgMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_TERMINATE)).build());
 	}
 }

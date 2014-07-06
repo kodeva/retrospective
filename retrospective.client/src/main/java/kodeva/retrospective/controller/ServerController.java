@@ -5,6 +5,7 @@ import kodeva.retrospective.messaging.Message;
 import kodeva.retrospective.messaging.MessageBroker;
 import kodeva.retrospective.messaging.MessageFilter;
 import kodeva.retrospective.messaging.MessageProcessor;
+import kodeva.retrospective.model.Constants;
 import kodeva.retrospective.model.EntityMessageAdapter;
 import kodeva.retrospective.model.Model;
 
@@ -37,7 +38,7 @@ public class ServerController implements MessageProcessor {
 		case kodeva.retrospective.view.Constants.Messaging.SENDER:
 			switch (message.getValues(kodeva.retrospective.view.Constants.Messaging.Key.EVENT).iterator().next()) {
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_DELETE:
-				model.deleteCard(EntityMessageAdapter.toCardBuilder(message).build());
+				model.deleteCard(EntityMessageAdapter.toCardBuilder(message).build(), message.getValues(Constants.Messaging.Key.USER_DESK_ID).iterator().next());
 				break;
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_POSTIT:
 				model.publishCard(EntityMessageAdapter.toCardBuilder(message).build());

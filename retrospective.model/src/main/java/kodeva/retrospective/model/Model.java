@@ -57,12 +57,28 @@ public class Model {
 	 * Deletes the card from user desk.
 	 * @param card
 	 *  card instance
+	 * @param userDeskId
+	 *  id of user desk from which the card should be removed
 	 */
 	public final void deleteCard(Card card) {
-		cardsOnUserDesk.remove(card);
-		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		deleteCard(card, userDesk.getId());
+	}
+
+	/**
+	 * Deletes the card from user desk.
+	 * @param card
+	 *  card instance
+	 * @param userDeskId
+	 *  id of user desk from which the card should be removed
+	 */
+	public final void deleteCard(Card card, String userDeskId) {
+		if (userDesk.getId().equals(userDeskId)) {
+			cardsOnUserDesk.remove(card);
+		}
+		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER).entries(EntityMessageAdapter.toMessageEntries(card))
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
-				.entries(EntityMessageAdapter.toMessageEntries(card)).build());
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDeskId))
+				.build());
 		synchronized(votes) {
 			final Iterator<Vote> votesIter = votes.iterator();
 			while (votesIter.hasNext()) {
@@ -217,6 +233,22 @@ public class Model {
 			}
 		}
 		return votesCount;
+	}
+
+	/**
+	 * @return
+	 *  Pin wall entity.
+	 */
+	public PinWall getPinWall() {
+		return pinWall;
+	}
+
+	/**
+	 * @return
+	 *  User desk entity.
+	 */
+	public UserDesk getUserDesk() {
+		return userDesk;
 	}
 
 	/**

@@ -60,6 +60,16 @@ public final class Constants {
 			 * Message key for card back side text.
 			 */
 			static final String CARD_BACK_SIDE_TEXT = SENDER + ":card:back-side-text";
+			
+			/**
+			 * Message key for user desk id.
+			 */
+			public static final String USER_DESK_ID = SENDER + ":user-desk-id";
+			
+			/**
+			 * Message key for pin wall id.
+			 */
+			public static final String PIN_WALL_ID = SENDER + ":pin-wall-id";
 		}
 
 		/**
