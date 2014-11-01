@@ -1,6 +1,10 @@
 package kodeva.retrospective.controller;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import java.util.AbstractMap;
 
@@ -9,6 +13,7 @@ import kodeva.retrospective.messaging.MessageBroker;
 import kodeva.retrospective.model.EntityMessageAdapter;
 import kodeva.retrospective.model.entity.Card;
 import kodeva.retrospective.model.entity.Card.Type;
+import kodeva.retrospective.model.entity.UserDesk;
 import kodeva.retrospective.view.Constants;
 import kodeva.retrospective.view.View;
 
@@ -17,81 +22,100 @@ import org.junit.Test;
 
 public class LocalControllerTest {
 	
-	private MessageBroker orgMessageBroker, partMessageBroker;
-	private View orgView, partView;
-	private Card orgWentWellCard, partNeedsImprovementCard;
+	private MessageBroker organizatorMessageBroker, participantMessageBroker;
+	private View organizatorView, participantView;
+	private Card organizatorWentWellCard, participantNeedsImprovementCard;
 
 	@Before
 	public void beforeTest() {
-		orgMessageBroker = new MessageBroker();
-		orgView = mock(View.class);
-		new LocalController(orgMessageBroker, orgView);
+		organizatorMessageBroker = new MessageBroker();
+		organizatorView = mock(View.class);
+		new LocalController(organizatorMessageBroker, organizatorView);
 
-		partMessageBroker = new MessageBroker();
-		partView = mock(View.class);
-		new LocalController(partMessageBroker, partView);
+		participantMessageBroker = new MessageBroker();
+		participantView = mock(View.class);
+		new LocalController(participantMessageBroker, participantView);
+	}
+
+	@Test
+	public void startRetrospectiveSession() {
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_START)).build());
+		verify(organizatorView).createUserDesk((UserDesk) any());
 	}
 
 	@Test
 	public void addNewWellDoneCard() {
-		orgMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_CREATE_WENT_WELL)).build());
 		final CardDeepWithoutIdMatcher cardMatcher = new CardDeepWithoutIdMatcher(new Card.Builder().type(Type.WentWell).build());
-		verify(orgView).createCardOnUserDesk(argThat(cardMatcher));
-		orgWentWellCard = cardMatcher.getLastComparedCard();
+		verify(organizatorView).createCardOnUserDesk(argThat(cardMatcher));
+		organizatorWentWellCard = cardMatcher.getLastComparedCard();
 	}
 
 	@Test
 	public void addNewImprovementCard() {
-		partMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_CREATE_NEEDS_IMPROVEMENT)).build());
 		final CardDeepWithoutIdMatcher cardMatcher = new CardDeepWithoutIdMatcher(new Card.Builder().type(Type.NeedsImprovement).build());
-		verify(partView).createCardOnUserDesk(argThat(cardMatcher));
-		partNeedsImprovementCard = cardMatcher.getLastComparedCard();
+		verify(participantView).createCardOnUserDesk(argThat(cardMatcher));
+		participantNeedsImprovementCard = cardMatcher.getLastComparedCard();
 	}
 
 	@Test
 	public void removeWellDoneCard() {
 		addNewWellDoneCard();
-		orgMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
-				.entries(EntityMessageAdapter.toMessageEntries(orgWentWellCard)).build());
-		verify(orgView).deleteCardFromUserDesk(orgWentWellCard);
+				.entries(EntityMessageAdapter.toMessageEntries(organizatorWentWellCard)).build());
+		verify(organizatorView).deleteCardFromUserDesk(organizatorWentWellCard);
 	}
 
 	@Test
 	public void removeImprovementCard() {
 		addNewImprovementCard();
-		partMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
-				.entries(EntityMessageAdapter.toMessageEntries(partNeedsImprovementCard)).build());
-		verify(partView).deleteCardFromUserDesk(partNeedsImprovementCard);
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		verify(participantView).deleteCardFromUserDesk(participantNeedsImprovementCard);
 	}
 	
 	@Test
-	public void postWellDoneCard() {
+	public void postCard() {
 		addNewWellDoneCard();
-		orgMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_START)).build());
 		addNewImprovementCard();
-		partMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_CONNECT)).build());
 		
-		orgMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_POSTIT))
-				.entries(EntityMessageAdapter.toMessageEntries(orgWentWellCard)).build());
+				.entries(EntityMessageAdapter.toMessageEntries(organizatorWentWellCard)).build());
 		try {
 			Thread.sleep(2000);
 		} catch (InterruptedException e) {
 		}
-		verify(orgView).deleteCardFromUserDesk(orgWentWellCard);
-		verify(orgView).createCardOnPinWall(orgWentWellCard);
-		verify(partView, never()).deleteCardFromUserDesk((Card) any());
-		verify(partView).createCardOnPinWall(orgWentWellCard);
+		verify(organizatorView).deleteCardFromUserDesk(organizatorWentWellCard);
+		verify(organizatorView).createCardOnPinWall(organizatorWentWellCard);
+		verify(participantView, never()).deleteCardFromUserDesk(organizatorWentWellCard);
+		verify(participantView).createCardOnPinWall(organizatorWentWellCard);
 		
-		partMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_POSTIT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+		}
+		verify(participantView).deleteCardFromUserDesk(participantNeedsImprovementCard);
+		verify(participantView).createCardOnPinWall(participantNeedsImprovementCard);
+		verify(organizatorView, never()).deleteCardFromUserDesk(participantNeedsImprovementCard);
+		verify(organizatorView).createCardOnPinWall(participantNeedsImprovementCard);
+		
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_DISCONNECT)).build());
-		orgMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_TERMINATE)).build());
 	}
 }

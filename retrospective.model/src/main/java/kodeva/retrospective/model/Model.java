@@ -100,6 +100,7 @@ public class Model {
 		cardsOnPinWall.put(card, pinWall);
 		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_PUBLISH))
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDesk.getId()))
 				.entries(EntityMessageAdapter.toMessageEntries(card)).build());
 	}
 

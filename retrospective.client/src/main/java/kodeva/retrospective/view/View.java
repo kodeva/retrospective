@@ -7,14 +7,19 @@ import javafx.scene.Parent;
 import javafx.scene.layout.VBox;
 import kodeva.retrospective.messaging.MessageBroker;
 import kodeva.retrospective.model.entity.Card;
+import kodeva.retrospective.model.entity.UserDesk;
 
 public class View {
+	private EditArea editArea;
+
 	private final VBox feedback;
-	private final EditArea editArea;
 	private final WentWellArea wentWellArea;
-	private final NeedsImprovementArea needsImprovementArea; 
+	private final NeedsImprovementArea needsImprovementArea;
+	private final MessageBroker messageBroker;
 
 	public View(MessageBroker messageBroker) {
+		this.messageBroker = messageBroker;
+
 		feedback = new VBox();
 		feedback.setPadding(new Insets(2));
 		feedback.setSpacing(3);
@@ -22,11 +27,6 @@ public class View {
 		final ButtonMenu menu = new ButtonMenu(messageBroker);
 		menu.prefWidthProperty().bind(feedback.widthProperty());
 		feedback.getChildren().add(menu.getNode());
-
-		editArea = new EditArea(messageBroker);
-		feedback.getChildren().add(editArea.getNode());
-		editArea.prefWidthProperty().bind(feedback.widthProperty());
-		editArea.prefHeightProperty().bind(feedback.heightProperty());
 
 		wentWellArea = new WentWellArea(messageBroker);
 		feedback.getChildren().add(wentWellArea.getNode());
@@ -49,6 +49,13 @@ public class View {
 	
 	public DoubleProperty prefHeightProperty() {
 		return feedback.prefHeightProperty();
+	}
+
+	public void createUserDesk(final UserDesk userDesk) {
+		editArea = new EditArea(messageBroker, userDesk);
+		feedback.getChildren().add(editArea.getNode());
+		editArea.prefWidthProperty().bind(feedback.widthProperty());
+		editArea.prefHeightProperty().bind(feedback.heightProperty());
 	}
 
 	/**

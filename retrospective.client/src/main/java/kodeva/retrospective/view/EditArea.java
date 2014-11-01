@@ -5,11 +5,12 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import kodeva.retrospective.messaging.MessageBroker;
+import kodeva.retrospective.model.entity.UserDesk;
 
 public class EditArea extends AbstractCardArea {
 	private final ScrollPane cardsEditAreaScrolled;
 
-	public EditArea(MessageBroker messageBroker) {
+	public EditArea(MessageBroker messageBroker, UserDesk userDesk) {
 		super(messageBroker);
 
 		cardsEditAreaScrolled = new ScrollPane();

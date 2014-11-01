@@ -48,6 +48,7 @@ public class LocalController implements MessageProcessor {
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_SESSION_START:
 				if ((clientController == null) && (serverController == null)) {
 					serverController = new ServerController(messageBroker, model);
+					view.createUserDesk(model.getUserDesk());
 				}
 				break;
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_SESSION_TERMINATE:
