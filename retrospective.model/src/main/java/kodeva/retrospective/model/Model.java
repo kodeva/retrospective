@@ -91,17 +91,28 @@ public class Model {
 	}
 
 	/**
+	 * Makes a card from given UserDesk visible in session.
+	 * @param card
+	 *  card instance
+	 * @param userDeskId
+	 *  UserDesk ID
+	 */
+	public final void publishCard(Card card, String userDeskId) {
+		cardsOnUserDesk.remove(card);
+		cardsOnPinWall.put(card, pinWall);
+		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_PUBLISH))
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDeskId))
+				.entries(EntityMessageAdapter.toMessageEntries(card)).build());
+	}
+
+	/**
 	 * Makes a card visible in session.
 	 * @param card
 	 *  card instance
 	 */
 	public final void publishCard(Card card) {
-		cardsOnUserDesk.remove(card);
-		cardsOnPinWall.put(card, pinWall);
-		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
-				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_PUBLISH))
-				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDesk.getId()))
-				.entries(EntityMessageAdapter.toMessageEntries(card)).build());
+		publishCard(card, userDesk.getId());
 	}
 
 	/**

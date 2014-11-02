@@ -1,5 +1,7 @@
 package kodeva.retrospective.controller;
 
+import java.util.Collection;
+
 import kodeva.retrospective.controller.websockets.ServerWebSocketsEndpoint;
 import kodeva.retrospective.messaging.Message;
 import kodeva.retrospective.messaging.MessageBroker;
@@ -8,6 +10,7 @@ import kodeva.retrospective.messaging.MessageProcessor;
 import kodeva.retrospective.model.Constants;
 import kodeva.retrospective.model.EntityMessageAdapter;
 import kodeva.retrospective.model.Model;
+import kodeva.retrospective.model.entity.Card;
 
 /**
  * Controller for remote actions on server.
@@ -41,7 +44,13 @@ public class ServerController implements MessageProcessor {
 				model.deleteCard(EntityMessageAdapter.toCardBuilder(message).build(), message.getValues(Constants.Messaging.Key.USER_DESK_ID).iterator().next());
 				break;
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_POSTIT:
-				model.publishCard(EntityMessageAdapter.toCardBuilder(message).build());
+				final Collection<String> userDeskIds = message.getValues(Constants.Messaging.Key.USER_DESK_ID);
+				final Card card = EntityMessageAdapter.toCardBuilder(message).build();
+				if (userDeskIds.isEmpty()) {
+					model.publishCard(card);
+				} else {
+					model.publishCard(card, userDeskIds.iterator().next());
+				}
 				break;
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_EDIT:
 				model.unpublishCard(EntityMessageAdapter.toCardBuilder(message).build());
