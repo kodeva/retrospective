@@ -13,8 +13,8 @@ public class View {
 	private EditArea editArea;
 
 	private final VBox feedback;
-	private final WentWellArea wentWellArea;
-	private final NeedsImprovementArea needsImprovementArea;
+	private WentWellArea wentWellArea;
+	private NeedsImprovementArea needsImprovementArea;
 	private final MessageBroker messageBroker;
 
 	public View(MessageBroker messageBroker) {
@@ -27,16 +27,6 @@ public class View {
 		final ButtonMenu menu = new ButtonMenu(messageBroker);
 		menu.prefWidthProperty().bind(feedback.widthProperty());
 		feedback.getChildren().add(menu.getNode());
-
-		wentWellArea = new WentWellArea(messageBroker);
-		feedback.getChildren().add(wentWellArea.getNode());
-		wentWellArea.prefWidthProperty().bind(feedback.widthProperty());
-		wentWellArea.prefHeightProperty().bind(feedback.heightProperty());
-
-		needsImprovementArea = new NeedsImprovementArea(messageBroker);
-		feedback.getChildren().add(needsImprovementArea.getNode());
-		needsImprovementArea.prefWidthProperty().bind(feedback.widthProperty());
-		needsImprovementArea.prefHeightProperty().bind(feedback.heightProperty());
 	}
 	
 	public Parent getParent() {
@@ -51,11 +41,27 @@ public class View {
 		return feedback.prefHeightProperty();
 	}
 
-	public void createUserDesk(final UserDesk userDesk) {
+	public void createUserDesk(UserDesk userDesk) {
 		editArea = new EditArea(messageBroker, userDesk);
 		feedback.getChildren().add(editArea.getNode());
 		editArea.prefWidthProperty().bind(feedback.widthProperty());
 		editArea.prefHeightProperty().bind(feedback.heightProperty());
+	}
+
+	public void createPinWall() {
+		wentWellArea = new WentWellArea(messageBroker);
+		feedback.getChildren().add(wentWellArea.getNode());
+		wentWellArea.prefWidthProperty().bind(feedback.widthProperty());
+		wentWellArea.prefHeightProperty().bind(feedback.heightProperty());
+
+		needsImprovementArea = new NeedsImprovementArea(messageBroker);
+		feedback.getChildren().add(needsImprovementArea.getNode());
+		needsImprovementArea.prefWidthProperty().bind(feedback.widthProperty());
+		needsImprovementArea.prefHeightProperty().bind(feedback.heightProperty());
+	}
+
+	public void removePinWall() {
+		feedback.getChildren().removeAll(wentWellArea.getNode(), needsImprovementArea.getNode());
 	}
 
 	/**

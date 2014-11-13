@@ -25,6 +25,7 @@ public class LocalController implements MessageProcessor {
 	public LocalController(MessageBroker messageBroker, View view) {
 		model = new Model(this.messageBroker = messageBroker);
 		this.view = view;
+		view.createUserDesk(model.getUserDesk());
 		messageBroker.subscribe(new MessageFilter.Builder().sender(kodeva.retrospective.view.Constants.Messaging.SENDER).build(), this);
 		messageBroker.subscribe(new MessageFilter.Builder().sender(kodeva.retrospective.model.Constants.Messaging.SENDER).build(), this);
 	}
@@ -37,24 +38,27 @@ public class LocalController implements MessageProcessor {
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_SESSION_CONNECT:
 				if ((clientController == null) && (serverController == null)) {
 					clientController = new ClientController(messageBroker, model);
+					view.createPinWall();
 				}
 				break;
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_SESSION_DISCONNECT:
 				if (clientController != null) {
 					clientController.close();
 					clientController = null;
+					view.removePinWall();
 				}
 				break;
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_SESSION_START:
 				if ((clientController == null) && (serverController == null)) {
 					serverController = new ServerController(messageBroker, model);
-					view.createUserDesk(model.getUserDesk());
+					view.createPinWall();
 				}
 				break;
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_SESSION_TERMINATE:
 				if (serverController != null) {
 					serverController.close();
 					serverController = null;
+					view.removePinWall();
 				}
 				break;
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_CREATE_WENT_WELL:
