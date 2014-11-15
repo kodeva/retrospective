@@ -44,6 +44,7 @@ public class LocalControllerTest {
 		}
 	}
 
+	@Test
 	public void createOrganizator() {
 		organizatorMessageBroker = new MessageBroker();
 		organizatorView = mock(View.class);
@@ -111,21 +112,14 @@ public class LocalControllerTest {
 		verifyNoMoreInteractions(participantView);
 	}
 	
-	@Test
-	public void startRetrospectiveSession() {
-		createOrganizator();
+	private void startRetrospectiveSessionAndConnectClients() {
 		reset(organizatorView);
-		
 		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_START)).build());
 		verify(organizatorView).createPinWall();
 		verifyNoMoreInteractions(organizatorView);
-	}
 
-	public void connectToRetrospectiveSession() {
-		createParticipant();
 		reset(participantView);
-
 		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_CONNECT)).build());
 		verify(participantView).createPinWall();
@@ -136,8 +130,7 @@ public class LocalControllerTest {
 	public void postCard() {
 		addNewWellDoneCard();
 		addNewImprovementCard();
-		startRetrospectiveSession();
-		connectToRetrospectiveSession();
+		startRetrospectiveSessionAndConnectClients();
 		reset(organizatorView);
 		reset(participantView);
 		
@@ -150,8 +143,12 @@ public class LocalControllerTest {
 		}
 		verify(organizatorView).deleteCardFromUserDesk(organizatorWentWellCard);
 		verify(organizatorView).createCardOnPinWall(organizatorWentWellCard);
+		verify(organizatorView).setVoteCountOwn(organizatorWentWellCard, 0);
+		verify(organizatorView).setVoteCountTotal(organizatorWentWellCard, 0);
 		verify(participantView, never()).deleteCardFromUserDesk(organizatorWentWellCard);
 		verify(participantView).createCardOnPinWall(organizatorWentWellCard);
+		verify(participantView).setVoteCountOwn(organizatorWentWellCard, 0);
+		verify(participantView).setVoteCountTotal(organizatorWentWellCard, 0);
 		verifyNoMoreInteractions(organizatorView);
 		verifyNoMoreInteractions(participantView);
 
@@ -167,8 +164,12 @@ public class LocalControllerTest {
 		}
 		verify(participantView).deleteCardFromUserDesk(participantNeedsImprovementCard);
 		verify(participantView).createCardOnPinWall(participantNeedsImprovementCard);
+		verify(participantView).setVoteCountOwn(participantNeedsImprovementCard, 0);
+		verify(participantView).setVoteCountTotal(participantNeedsImprovementCard, 0);
 		verify(organizatorView, never()).deleteCardFromUserDesk(participantNeedsImprovementCard);
 		verify(organizatorView).createCardOnPinWall(participantNeedsImprovementCard);
+		verify(organizatorView).setVoteCountOwn(participantNeedsImprovementCard, 0);
+		verify(organizatorView).setVoteCountTotal(participantNeedsImprovementCard, 0);
 		verifyNoMoreInteractions(organizatorView);
 		verifyNoMoreInteractions(participantView);
 	}
