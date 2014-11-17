@@ -23,6 +23,7 @@ import org.junit.After;
 import org.junit.Test;
 
 public class LocalControllerTest {
+	private static final long WAIT_MILLIS = 250L;
 	
 	private MessageBroker organizatorMessageBroker, participantMessageBroker;
 	private View organizatorView, participantView;
@@ -138,7 +139,7 @@ public class LocalControllerTest {
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_POSTIT))
 				.entries(EntityMessageAdapter.toMessageEntries(organizatorWentWellCard)).build());
 		try {
-			Thread.sleep(2000);
+			Thread.sleep(WAIT_MILLIS);
 		} catch (InterruptedException e) {
 		}
 		verify(organizatorView).deleteCardFromUserDesk(organizatorWentWellCard);
@@ -159,7 +160,7 @@ public class LocalControllerTest {
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_POSTIT))
 				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
 		try {
-			Thread.sleep(2000);
+			Thread.sleep(WAIT_MILLIS);
 		} catch (InterruptedException e) {
 		}
 		verify(participantView).deleteCardFromUserDesk(participantNeedsImprovementCard);
@@ -170,6 +171,111 @@ public class LocalControllerTest {
 		verify(organizatorView).createCardOnPinWall(participantNeedsImprovementCard);
 		verify(organizatorView).setVoteCountOwn(participantNeedsImprovementCard, 0);
 		verify(organizatorView).setVoteCountTotal(participantNeedsImprovementCard, 0);
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+	}
+	
+	@Test
+	public void addVote() {
+		postCard();
+		reset(organizatorView);
+		reset(participantView);
+		
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		verify(organizatorView).setVoteCountOwn(participantNeedsImprovementCard, 1);
+		verify(organizatorView).setVoteCountTotal(participantNeedsImprovementCard, 1);
+		verify(participantView).setVoteCountOwn(participantNeedsImprovementCard, 0);
+		verify(participantView).setVoteCountTotal(participantNeedsImprovementCard, 1);
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+		reset(organizatorView);
+		reset(participantView);
+
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		verify(organizatorView).setVoteCountOwn(participantNeedsImprovementCard, 1);
+		verify(organizatorView).setVoteCountTotal(participantNeedsImprovementCard, 2);
+		verify(participantView).setVoteCountOwn(participantNeedsImprovementCard, 1);
+		verify(participantView).setVoteCountTotal(participantNeedsImprovementCard, 2);
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+	}
+
+	@Test
+	public void addMoreVotesThanAllowed() {
+		postCard();
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		reset(organizatorView);
+		reset(participantView);
+
+		// No more that 3 votes can be added
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+	}
+	
+	@Test
+	public void removeVote() {
+		addVote();
+		reset(organizatorView);
+		reset(participantView);
+		
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_DECREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		verify(organizatorView).setVoteCountOwn(participantNeedsImprovementCard, 0);
+		verify(organizatorView).setVoteCountTotal(participantNeedsImprovementCard, 1);
+		verify(participantView).setVoteCountOwn(participantNeedsImprovementCard, 1);
+		verify(participantView).setVoteCountTotal(participantNeedsImprovementCard, 1);
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+		reset(organizatorView);
+		reset(participantView);
+
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_DECREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		verify(organizatorView).setVoteCountOwn(participantNeedsImprovementCard, 0);
+		verify(organizatorView).setVoteCountTotal(participantNeedsImprovementCard, 0);
+		verify(participantView).setVoteCountOwn(participantNeedsImprovementCard, 0);
+		verify(participantView).setVoteCountTotal(participantNeedsImprovementCard, 0);
 		verifyNoMoreInteractions(organizatorView);
 		verifyNoMoreInteractions(participantView);
 	}

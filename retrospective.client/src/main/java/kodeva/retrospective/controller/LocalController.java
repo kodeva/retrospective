@@ -110,7 +110,7 @@ public class LocalController implements MessageProcessor {
 					view.deleteCardFromUserDesk(card);
 				}
 				view.createCardOnPinWall(card);
-				view.setVoteCountOwn(card, model.getVotesCountTotal(card));
+				view.setVoteCountOwn(card, model.getVotesCountOwn(card));
 				view.setVoteCountTotal(card, model.getVotesCountTotal(card));
 				break;
 			}
@@ -118,14 +118,14 @@ public class LocalController implements MessageProcessor {
 				final Card card = EntityMessageAdapter.toCardBuilder(message).build();
 				view.deleteCardFromPinWall(card);
 				view.createCardOnUserDesk(card);
-				view.setVoteCountOwn(card, model.getVotesCountTotal(card));
+				view.setVoteCountOwn(card, model.getVotesCountOwn(card));
 				view.setVoteCountTotal(card, model.getVotesCountTotal(card));
 				break;
 			}
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_VOTE_ADD:
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_VOTE_REMOVE: {
 				final Card card = EntityMessageAdapter.toCardBuilder(message).build();
-				view.setVoteCountOwn(card, model.getVotesCountTotal(card));
+				view.setVoteCountOwn(card, model.getVotesCountOwn(card));
 				view.setVoteCountTotal(card, model.getVotesCountTotal(card));
 				break;
 			}

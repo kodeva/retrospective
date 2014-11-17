@@ -15,6 +15,7 @@ import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 
+import kodeva.retrospective.controller.Constants;
 import kodeva.retrospective.messaging.Message;
 import kodeva.retrospective.messaging.MessageBroker;
 
@@ -38,7 +39,7 @@ public class ServerWebSocketsEndpoint {
     	if (LOGGER.isLoggable(Level.INFO)) {
     		LOGGER.info(String.format("Received message from session '%s': '%s'", session.getId(), message));
     	}
-    	messageBroker.sendMessage(new Message.Builder().string(message).build());
+    	messageBroker.sendMessage(new Message.Builder().string(message).sender(Constants.Messaging.SENDER).build());
     }
  
     @OnClose

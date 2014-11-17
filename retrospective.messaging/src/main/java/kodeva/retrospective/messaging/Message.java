@@ -112,13 +112,28 @@ public class Message {
 	 *  <code>true</code> (message contains given key) / <code>false</code> otherwise.
 	 */
 	private static boolean containsKey(Collection<Map.Entry<String, String>> entries, String key) {
+		return (getEntriesContainingKey(entries, key).size() > 0);
+	}
+	
+	/**
+	 * Returns sub-collection of given collection containing entries containing given key and any value.
+	 * @param entries
+	 *  collection of entries
+	 * @param key
+	 *  key id
+	 * @return
+	 *  sub-collection of given collection containing entries containing given key and any value
+	 */
+	private static Collection<Map.Entry<String, String>> getEntriesContainingKey(Collection<Map.Entry<String, String>> entries, String key) {
 		final Iterator<Map.Entry<String, String>> iter = entries.iterator();
+		final Collection<Map.Entry<String, String>> matchingEntries = new ArrayList<>();
 		while (iter.hasNext()) {
-			if (iter.next().getKey().equals(key)) {
-				return true;
+			final Map.Entry<String, String> entry = iter.next();
+			if (entry.getKey().equals(key)) {
+				matchingEntries.add(entry);
 			}
 		}
-		return false;
+		return matchingEntries;
 	}
 
 	/**
@@ -202,13 +217,14 @@ public class Message {
 		}
 		
 		/**
-		 * Specifies message sender.
+		 * Specifies message sender. Overwrites any previously specified sender.
 		 * @param sender
 		 *  message sender.
 		 * @return
 		 * 	this instance
 		 */
 		public Builder sender(String sender) {
+			entries.removeAll(getEntriesContainingKey(entries, MessageEntryKey.Sender.toString()));
 			entries.add(new AbstractMap.SimpleImmutableEntry<String, String>(MessageEntryKey.Sender.toString(), sender));
 			return this;
 		}

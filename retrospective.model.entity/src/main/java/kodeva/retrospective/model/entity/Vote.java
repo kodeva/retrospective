@@ -5,7 +5,7 @@ package kodeva.retrospective.model.entity;
  */
 public final class Vote extends AbstractEntity {
 	private String cardId;
-	private String userId;
+	private String userDeskId;
 	private String sessionId;
 	
 	private Vote() {
@@ -16,8 +16,8 @@ public final class Vote extends AbstractEntity {
 		return cardId;
 	}
 
-	public String getUserId() {
-		return userId;
+	public String getUserDeskId() {
+		return userDeskId;
 	}
 
 	public String getSessionId() {
@@ -39,7 +39,7 @@ public final class Vote extends AbstractEntity {
 	 */
 	public static final class Builder {
 		private Card card;
-		private User user;
+		private String userDeskId;
 		private Session session;
 
 		/**
@@ -56,13 +56,13 @@ public final class Vote extends AbstractEntity {
 
 		/**
 		 * Sets id of the user to whom the vote belongs.
-		 * @param user
-		 *  user instance
+		 * @param userDeskId
+		 *  UserDesk ID
 		 * @return
 		 *  this instance
 		 */
-		public Builder user(User user) {
-			this.user = user;
+		public Builder userDeskId(String userDeskId) {
+			this.userDeskId = userDeskId;
 			return this;
 		}
 
@@ -87,15 +87,15 @@ public final class Vote extends AbstractEntity {
 			if (card == null) {
 				throw new IllegalArgumentException("Card not specified");
 			}
-			if (user == null) {
-				throw new IllegalArgumentException("User not specified");
+			if (userDeskId == null) {
+				throw new IllegalArgumentException("UserDesk ID not specified");
 			}
 			if (session == null) {
 				throw new IllegalArgumentException("Session not specified");
 			}
 			Vote vote = new Vote();
 			vote.cardId = card.getId();
-			vote.userId = user.getId();
+			vote.userDeskId = userDeskId;
 			vote.sessionId = session.getId();
 			return vote;
 		}

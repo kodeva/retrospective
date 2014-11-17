@@ -107,15 +107,6 @@ public class Model {
 	}
 
 	/**
-	 * Makes a card visible in session.
-	 * @param card
-	 *  card instance
-	 */
-	public final void publishCard(Card card) {
-		publishCard(card, userDesk.getId());
-	}
-
-	/**
 	 * Unpublish a card from PinWall.
 	 * @param card
 	 *  card instance
@@ -157,54 +148,63 @@ public class Model {
 	}
 	
 	/**
-	 * Adds one vote to the card on PinWall for current user.
+	 * Adds one vote to the card on PinWall for specified UserDesk (user).
 	 * @param card
 	 *  card instance
+	 * @param userDeskId
+	 *  UserDesk ID
 	 */
-	public final void addVote(Card card) {
+	public final void addVote(Card card, String userDeskId) {
 		if (! cardsOnPinWall.containsKey(card)) {
 			return;
 		}
 
-		final User user = userDesk.getUser();
 		final Session session = pinWall.getSession();
-		if ((user == null) || (session == null)) {
+		if ((userDeskId == null) || (session == null)) {
 			return;
 		}
 
-		if (getUserVotes().size() < Constants.MAXIMUM_VOTES_PER_USER_PER_SESSION) {
-			final Vote vote = new Vote.Builder().card(card).user(user).session(session).build();
+		if (getUserDeskVotes().size() < Constants.MAXIMUM_VOTES_PER_USER_PER_SESSION) {
+			final Vote vote = new Vote.Builder().card(card).userDeskId(userDeskId).session(session).build();
 			votes.add(vote);
 			messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 					.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_VOTE_ADD))
+					.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDeskId))
 					.entries(EntityMessageAdapter.toMessageEntries(card)).build());
 		}
 	}
 	
 	/**
-	 * Removes one vote from the card on pin wall for current user.
+	 * Removes one vote from the card on pin wall for specified UserDesk (user).
 	 * @param card
 	 *  card instance
+	 * @param userDeskId
+	 *  UserDesk ID
 	 */
-	public final void removeVote(Card card) {
+	public final void removeVote(Card card, String userDeskId) {
 		if (! cardsOnPinWall.containsKey(card)) {
 			return;
 		}
 
-		final User user = userDesk.getUser();
 		final Session session = pinWall.getSession();
-		if ((user == null) || (session == null)) {
+		if ((userDeskId == null) || (session == null)) {
 			return;
 		}
 		
 		synchronized(votes) {
+			Vote voteToRemove = null;
 			for (Vote vote : votes) {
-				if (card.getId().equals(vote.getCardId()) && user.getId().equals(vote.getUserId()) && session.getId().equals(vote.getSessionId())) {
-					votes.remove(vote);
-					messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
-							.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_VOTE_REMOVE))
-							.entries(EntityMessageAdapter.toMessageEntries(card)).build());
+				if (card.getId().equals(vote.getCardId()) && userDeskId.equals(vote.getUserDeskId()) && session.getId().equals(vote.getSessionId())) {
+					voteToRemove = vote;
 				}
+			}
+			
+			if (voteToRemove != null) {
+				votes.remove(voteToRemove);
+				messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+						.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_VOTE_REMOVE))
+						.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDeskId))
+						.entries(EntityMessageAdapter.toMessageEntries(card)).build());
 			}
 		}
 	}
@@ -220,7 +220,7 @@ public class Model {
 		int votesCount = 0;
 		synchronized(votes) {
 			for (Vote vote : votes) {
-				if (card.getId().equals(vote.getCardId()) && user.getId().equals(vote.getUserId())) {
+				if (card.getId().equals(vote.getCardId()) && userDesk.getId().equals(vote.getUserDeskId())) {
 					votesCount++;
 				}
 			}
@@ -266,17 +266,17 @@ public class Model {
 	/**
 	 * @return user's votes
 	 */
-	private final Set<Vote> getUserVotes() {
-		final User user = userDesk.getUser();
+	private final Set<Vote> getUserDeskVotes() {
+		final String userDeskId = userDesk.getId();
 		final Session session = pinWall.getSession();
-		if ((user == null) || (session == null)) {
+		if ((userDeskId == null) || (session == null)) {
 			return Collections.emptySet();
 		}
 		
 		final Set<Vote> userSessionVotes = new HashSet<>();
 		synchronized(votes) {
 			for (Vote vote : votes) {
-				if (user.getId().equals(vote.getUserId()) && session.getId().equals(vote.getSessionId())) {
+				if (userDeskId.equals(vote.getUserDeskId()) && session.getId().equals(vote.getSessionId())) {
 					userSessionVotes.add(vote);
 				}
 			}

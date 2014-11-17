@@ -3,6 +3,8 @@ package kodeva.retrospective.controller.websockets;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.websocket.CloseReason;
 import javax.websocket.DeploymentException;
@@ -11,6 +13,7 @@ import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 
+import kodeva.retrospective.controller.Constants;
 import kodeva.retrospective.messaging.Message;
 import kodeva.retrospective.messaging.MessageBroker;
 
@@ -18,6 +21,8 @@ import org.glassfish.tyrus.client.ClientManager;
 
 @javax.websocket.ClientEndpoint
 public class ClientWebSocketsEndpoint {
+	private static final Logger LOGGER = Logger.getLogger(ClientWebSocketsEndpoint.class.getName());
+
 	private final MessageBroker messageBroker;
 	private final Session session;
 
@@ -27,7 +32,10 @@ public class ClientWebSocketsEndpoint {
  
     @OnMessage
     public void onMessage(String message, Session session) {
-    	messageBroker.sendMessage(new Message.Builder().string(message).build());
+    	if (LOGGER.isLoggable(Level.INFO)) {
+    		LOGGER.info(String.format("Received message from session '%s': '%s'", session.getId(), message));
+    	}
+    	messageBroker.sendMessage(new Message.Builder().string(message).sender(Constants.Messaging.SENDER).build());
     }
  
     @OnClose
