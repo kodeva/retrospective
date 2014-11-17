@@ -164,7 +164,7 @@ public class Model {
 			return;
 		}
 
-		if (getUserDeskVotes().size() < Constants.MAXIMUM_VOTES_PER_USER_PER_SESSION) {
+		if (getUserDeskVotes(userDeskId).size() < Constants.MAXIMUM_VOTES_PER_USER_PER_SESSION) {
 			final Vote vote = new Vote.Builder().card(card).userDeskId(userDeskId).session(session).build();
 			votes.add(vote);
 			messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
@@ -264,10 +264,11 @@ public class Model {
 	}
 
 	/**
-	 * @return user's votes
+	 * @param userDeskId
+	 *  UserDesk ID
+	 * @return user's votes for given UserDesk
 	 */
-	private final Set<Vote> getUserDeskVotes() {
-		final String userDeskId = userDesk.getId();
+	private final Set<Vote> getUserDeskVotes(String userDeskId) {
 		final Session session = pinWall.getSession();
 		if ((userDeskId == null) || (session == null)) {
 			return Collections.emptySet();
