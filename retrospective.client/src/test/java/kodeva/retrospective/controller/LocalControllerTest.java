@@ -3,7 +3,6 @@ package kodeva.retrospective.controller;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -144,12 +143,7 @@ public class LocalControllerTest {
 		}
 		verify(organizatorView).deleteCardFromUserDesk(organizatorWentWellCard);
 		verify(organizatorView).createCardOnPinWall(organizatorWentWellCard);
-		verify(organizatorView).setVoteCountOwn(organizatorWentWellCard, 0);
-		verify(organizatorView).setVoteCountTotal(organizatorWentWellCard, 0);
-		verify(participantView, never()).deleteCardFromUserDesk(organizatorWentWellCard);
 		verify(participantView).createCardOnPinWall(organizatorWentWellCard);
-		verify(participantView).setVoteCountOwn(organizatorWentWellCard, 0);
-		verify(participantView).setVoteCountTotal(organizatorWentWellCard, 0);
 		verifyNoMoreInteractions(organizatorView);
 		verifyNoMoreInteractions(participantView);
 
@@ -167,7 +161,6 @@ public class LocalControllerTest {
 		verify(participantView).createCardOnPinWall(participantNeedsImprovementCard);
 		verify(participantView).setVoteCountOwn(participantNeedsImprovementCard, 0);
 		verify(participantView).setVoteCountTotal(participantNeedsImprovementCard, 0);
-		verify(organizatorView, never()).deleteCardFromUserDesk(participantNeedsImprovementCard);
 		verify(organizatorView).createCardOnPinWall(participantNeedsImprovementCard);
 		verify(organizatorView).setVoteCountOwn(participantNeedsImprovementCard, 0);
 		verify(organizatorView).setVoteCountTotal(participantNeedsImprovementCard, 0);
@@ -175,6 +168,41 @@ public class LocalControllerTest {
 		verifyNoMoreInteractions(participantView);
 	}
 	
+	@Test
+	public void editCard() {
+		addVote();
+		reset(organizatorView);
+		reset(participantView);
+
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_EDIT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		verify(organizatorView).createCardOnUserDesk(participantNeedsImprovementCard);
+		verify(organizatorView).deleteCardFromPinWall(participantNeedsImprovementCard);
+		verify(organizatorView).setVoteCountOwn(participantNeedsImprovementCard, 1);
+		verify(organizatorView).setVoteCountTotal(participantNeedsImprovementCard, 2);
+		verify(participantView).deleteCardFromPinWall(participantNeedsImprovementCard);
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_EDIT))
+				.entries(EntityMessageAdapter.toMessageEntries(organizatorWentWellCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		verify(participantView).createCardOnUserDesk(organizatorWentWellCard);
+		verify(participantView).deleteCardFromPinWall(organizatorWentWellCard);
+		verify(organizatorView).deleteCardFromPinWall(organizatorWentWellCard);
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+	}
+
 	@Test
 	public void addVote() {
 		postCard();
@@ -208,6 +236,19 @@ public class LocalControllerTest {
 		verify(organizatorView).setVoteCountTotal(participantNeedsImprovementCard, 2);
 		verify(participantView).setVoteCountOwn(participantNeedsImprovementCard, 1);
 		verify(participantView).setVoteCountTotal(participantNeedsImprovementCard, 2);
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+		reset(organizatorView);
+		reset(participantView);
+
+		// No voting possing for WentWell cards
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(organizatorWentWellCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
 		verifyNoMoreInteractions(organizatorView);
 		verifyNoMoreInteractions(participantView);
 	}
@@ -244,8 +285,6 @@ public class LocalControllerTest {
 		verify(participantView).setVoteCountTotal(participantNeedsImprovementCard, 4);
 		verifyNoMoreInteractions(organizatorView);
 		verifyNoMoreInteractions(participantView);
-		reset(organizatorView);
-		reset(participantView);
 
 		// No more that 3 votes can be added from one UserDesk
 		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
@@ -327,4 +366,10 @@ public class LocalControllerTest {
 		verifyNoMoreInteractions(organizatorView);
 		verifyNoMoreInteractions(participantView);
 	}
+	
+	//TODO: tests
+	// - remove card
+	// - remove card with votes and then try to vote again
+	// - modify card text
+	// - add more participants
 }

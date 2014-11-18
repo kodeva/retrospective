@@ -107,15 +107,20 @@ public class Model {
 	}
 
 	/**
-	 * Unpublish a card from PinWall.
+	 * Unpublishes a card from PinWall.
 	 * @param card
 	 *  card instance
+	 * @param userDeskId
+	 *  UserDesk ID
 	 */
-	public final void unpublishCard(Card card) {
+	public final void unpublishCard(Card card, String userDeskId) {
 		cardsOnPinWall.remove(card);
-		cardsOnUserDesk.put(card, userDesk);
+		if (userDesk.getId().equals(userDeskId)) {
+			cardsOnUserDesk.put(card, userDesk);
+		}
 		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_UNPUBLISH))
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDeskId))
 				.entries(EntityMessageAdapter.toMessageEntries(card)).build());
 	}
 

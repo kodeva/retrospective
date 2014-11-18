@@ -50,7 +50,7 @@ public class ServerController implements MessageProcessor {
 				model.publishCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
 				break;
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_EDIT:
-				model.unpublishCard(EntityMessageAdapter.toCardBuilder(message).build());
+				model.unpublishCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
 				break;
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT:
 				model.addVote(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);

@@ -8,6 +8,7 @@ import kodeva.retrospective.model.Constants;
 import kodeva.retrospective.model.EntityMessageAdapter;
 import kodeva.retrospective.model.Model;
 import kodeva.retrospective.model.entity.Card;
+import kodeva.retrospective.model.entity.Card.Type;
 import kodeva.retrospective.view.View;
 
 /**
@@ -81,12 +82,16 @@ public class LocalController implements MessageProcessor {
 			break;
 
 		case kodeva.retrospective.model.Constants.Messaging.SENDER:
+			String userDeskId = null;
+			if (message.containsKey(Constants.Messaging.Key.USER_DESK_ID)) {
+				userDeskId = message.getValues(Constants.Messaging.Key.USER_DESK_ID).iterator().next();
+			}
+
 			switch (message.getValues(kodeva.retrospective.model.Constants.Messaging.Key.EVENT).iterator().next()) {
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_ADD:
 				view.createCardOnUserDesk(EntityMessageAdapter.toCardBuilder(message).build());
 				break;
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_DELETE: {
-				final String userDeskId = message.getValues(Constants.Messaging.Key.USER_DESK_ID).iterator().next();
 				if (model.getUserDesk().getId().equals(userDeskId)) {
 					view.deleteCardFromUserDesk(EntityMessageAdapter.toCardBuilder(message).build());
 				}
@@ -105,28 +110,35 @@ public class LocalController implements MessageProcessor {
 				break;
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_PUBLISH: {
 				final Card card = EntityMessageAdapter.toCardBuilder(message).build();
-				final String userDeskId = message.getValues(Constants.Messaging.Key.USER_DESK_ID).iterator().next();
 				if (model.getUserDesk().getId().equals(userDeskId)) {
 					view.deleteCardFromUserDesk(card);
 				}
 				view.createCardOnPinWall(card);
-				view.setVoteCountOwn(card, model.getVotesCountOwn(card));
-				view.setVoteCountTotal(card, model.getVotesCountTotal(card));
+				if (Type.NeedsImprovement.equals(card.getType())) {
+					view.setVoteCountOwn(card, model.getVotesCountOwn(card));
+					view.setVoteCountTotal(card, model.getVotesCountTotal(card));
+				}
 				break;
 			}
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_UNPUBLISH: {
 				final Card card = EntityMessageAdapter.toCardBuilder(message).build();
 				view.deleteCardFromPinWall(card);
-				view.createCardOnUserDesk(card);
-				view.setVoteCountOwn(card, model.getVotesCountOwn(card));
-				view.setVoteCountTotal(card, model.getVotesCountTotal(card));
+				if (model.getUserDesk().getId().equals(userDeskId)) {
+					view.createCardOnUserDesk(card);
+					if (Type.NeedsImprovement.equals(card.getType())) {
+						view.setVoteCountOwn(card, model.getVotesCountOwn(card));
+						view.setVoteCountTotal(card, model.getVotesCountTotal(card));
+					}
+				}
 				break;
 			}
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_VOTE_ADD:
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_VOTE_REMOVE: {
 				final Card card = EntityMessageAdapter.toCardBuilder(message).build();
-				view.setVoteCountOwn(card, model.getVotesCountOwn(card));
-				view.setVoteCountTotal(card, model.getVotesCountTotal(card));
+				if (Type.NeedsImprovement.equals(card.getType())) {
+					view.setVoteCountOwn(card, model.getVotesCountOwn(card));
+					view.setVoteCountTotal(card, model.getVotesCountTotal(card));
+				}
 				break;
 			}
 			}

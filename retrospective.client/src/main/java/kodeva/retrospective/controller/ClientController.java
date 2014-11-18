@@ -64,6 +64,9 @@ public class ClientController implements MessageProcessor {
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_PUBLISH:
 				model.publishCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
 				break;
+			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_UNPUBLISH:
+				model.unpublishCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
+				break;
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_VOTE_ADD:
 				model.addVote(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
 				break;
