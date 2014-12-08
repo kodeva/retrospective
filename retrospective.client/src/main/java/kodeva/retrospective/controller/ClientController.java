@@ -61,6 +61,9 @@ public class ClientController implements MessageProcessor {
 			// Project model messages received over wire to local model changes
 			final String userDeskId = message.getValues(Constants.Messaging.Key.USER_DESK_ID).iterator().next();
 			switch (message.getValues(kodeva.retrospective.model.Constants.Messaging.Key.EVENT).iterator().next()) {
+			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_DELETE:
+				model.deleteCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
+				break;
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_PUBLISH:
 				model.publishCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
 				break;

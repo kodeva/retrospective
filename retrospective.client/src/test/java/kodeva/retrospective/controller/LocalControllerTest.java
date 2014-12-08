@@ -366,9 +366,50 @@ public class LocalControllerTest {
 		verifyNoMoreInteractions(organizatorView);
 		verifyNoMoreInteractions(participantView);
 	}
+
+	@Test
+	public void removeWellDoneCardDuringSession() {
+		editCard();
+		reset(organizatorView);
+		reset(participantView);
+
+		// WentWell card is now on participant's desk
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
+				.entries(EntityMessageAdapter.toMessageEntries(organizatorWentWellCard)).build());
+		verifyNoMoreInteractions(participantView);
+		verifyNoMoreInteractions(organizatorView);
+
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
+				.entries(EntityMessageAdapter.toMessageEntries(organizatorWentWellCard)).build());
+		verify(participantView).deleteCardFromUserDesk(organizatorWentWellCard);
+		verifyNoMoreInteractions(participantView);
+		verifyNoMoreInteractions(organizatorView);
+	}
+
+	@Test
+	public void removeImprovementCardDuringSession() {
+		editCard();
+		reset(organizatorView);
+		reset(participantView);
+
+		// NeedsImprovement card is now on organizator's desk
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		verifyNoMoreInteractions(participantView);
+		verifyNoMoreInteractions(organizatorView);
+
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		verify(organizatorView).deleteCardFromUserDesk(participantNeedsImprovementCard);
+		verifyNoMoreInteractions(participantView);
+		verifyNoMoreInteractions(organizatorView);
+	}
 	
 	//TODO: tests
-	// - remove card
 	// - remove card with votes and then try to vote again
 	// - modify card text
 	// - add more participants

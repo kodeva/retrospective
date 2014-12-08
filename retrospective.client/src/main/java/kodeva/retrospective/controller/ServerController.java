@@ -44,7 +44,7 @@ public class ServerController implements MessageProcessor {
 		case kodeva.retrospective.view.Constants.Messaging.SENDER:
 			switch (message.getValues(kodeva.retrospective.view.Constants.Messaging.Key.EVENT).iterator().next()) {
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_DELETE:
-				model.deleteCard(EntityMessageAdapter.toCardBuilder(message).build(), message.getValues(Constants.Messaging.Key.USER_DESK_ID).iterator().next());
+				model.deleteCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
 				break;
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_POSTIT:
 				model.publishCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
