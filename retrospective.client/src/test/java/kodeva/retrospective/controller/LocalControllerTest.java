@@ -673,6 +673,5 @@ public class LocalControllerTest {
 	}
 
 	//TODO: tests
-	// - modify card text
 	// - add more participants
 }
