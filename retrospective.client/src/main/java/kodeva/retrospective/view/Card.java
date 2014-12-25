@@ -146,7 +146,9 @@ public class Card {
 	
 	public void setCard(kodeva.retrospective.model.entity.Card card) {
 		this.card = card;
+		final int positionCaret = frontSideText.getCaretPosition();
 		frontSideText.textProperty().set(card.getFrontSideText());
+		frontSideText.positionCaret(positionCaret);
 	}
 	
 	public void setVotesCountOwn(int votesCountOwn) {

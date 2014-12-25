@@ -111,6 +111,34 @@ public class LocalControllerTest {
 		verify(participantView).deleteCardFromUserDesk(participantNeedsImprovementCard);
 		verifyNoMoreInteractions(participantView);
 	}
+
+	@Test
+	public void updateFrontSideTextOnWellDoneCard() {
+		addNewWellDoneCard();
+		reset(organizatorView);
+
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_UPDATE_FRONT_SIDE_TEXT))
+				.entries(EntityMessageAdapter.toMessageEntries(organizatorWentWellCard))
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.UPDATED_VALUE, "Updated text")).build());
+		final CardDeepWithoutIdMatcher cardMatcher = new CardDeepWithoutIdMatcher(new Card.Builder().type(Type.WentWell).frontSideText("Updated text").build());
+		verify(organizatorView).updateCardOnUserDesk(argThat(cardMatcher));
+		verifyNoMoreInteractions(organizatorView);
+	}
+
+	@Test
+	public void updateFrontSideTextOnImprovementCard() {
+		addNewImprovementCard();
+		reset(participantView);
+
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_UPDATE_FRONT_SIDE_TEXT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard))
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.UPDATED_VALUE, "Updated text")).build());
+		final CardDeepWithoutIdMatcher cardMatcher = new CardDeepWithoutIdMatcher(new Card.Builder().type(Type.NeedsImprovement).frontSideText("Updated text").build());
+		verify(participantView).updateCardOnUserDesk(argThat(cardMatcher));
+		verifyNoMoreInteractions(participantView);
+	}
 	
 	private void startRetrospectiveSessionAndConnectClients() {
 		reset(organizatorView);
