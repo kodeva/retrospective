@@ -39,11 +39,12 @@ public class ClientController implements MessageProcessor {
 	
 	@Override
 	public void process(Message message) {
-		switch (message.getSender()) {
+		switch (message.getSender()) { 
+		case kodeva.retrospective.model.Constants.Messaging.SENDER:
 		case kodeva.retrospective.view.Constants.Messaging.SENDER:
-			// Send non-local view messages for confirmation over wire
+			// Send non-local view messages for confirmation / model messages for propagation over wire
 			switch (message.getValues(kodeva.retrospective.view.Constants.Messaging.Key.EVENT).iterator().next()) {
-			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_DELETE:
+			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_DELETE:
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_POSTIT:
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_EDIT:
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT:

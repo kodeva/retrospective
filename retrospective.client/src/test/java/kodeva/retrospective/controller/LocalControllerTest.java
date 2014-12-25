@@ -241,7 +241,7 @@ public class LocalControllerTest {
 		reset(organizatorView);
 		reset(participantView);
 
-		// No voting possing for WentWell cards
+		// No voting possible for WentWell cards
 		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
 				.entries(EntityMessageAdapter.toMessageEntries(organizatorWentWellCard)).build());
@@ -377,12 +377,20 @@ public class LocalControllerTest {
 		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
 				.entries(EntityMessageAdapter.toMessageEntries(organizatorWentWellCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
 		verifyNoMoreInteractions(participantView);
 		verifyNoMoreInteractions(organizatorView);
 
 		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
 				.entries(EntityMessageAdapter.toMessageEntries(organizatorWentWellCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
 		verify(participantView).deleteCardFromUserDesk(organizatorWentWellCard);
 		verifyNoMoreInteractions(participantView);
 		verifyNoMoreInteractions(organizatorView);
@@ -398,19 +406,245 @@ public class LocalControllerTest {
 		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
 				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
 		verifyNoMoreInteractions(participantView);
 		verifyNoMoreInteractions(organizatorView);
 
 		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
 				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
 		verify(organizatorView).deleteCardFromUserDesk(participantNeedsImprovementCard);
 		verifyNoMoreInteractions(participantView);
 		verifyNoMoreInteractions(organizatorView);
 	}
-	
+
+	@Test
+	public void removeCardWithVotesByOrganizatorAndAddVoteAgain() {
+		// Add all votes to one card
+		addMoreVotesThanAllowed();
+		reset(organizatorView);
+		reset(participantView);
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		verify(organizatorView).setVoteCountOwn(participantNeedsImprovementCard, 3);
+		verify(organizatorView).setVoteCountTotal(participantNeedsImprovementCard, 6);
+		verify(participantView).setVoteCountOwn(participantNeedsImprovementCard, 3);
+		verify(participantView).setVoteCountTotal(participantNeedsImprovementCard, 6);
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+		reset(organizatorView);
+		reset(participantView);
+
+		// And yet another improvement cards
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_CREATE_NEEDS_IMPROVEMENT)).build());
+		final CardDeepWithoutIdMatcher cardMatcher = new CardDeepWithoutIdMatcher(new Card.Builder().type(Type.NeedsImprovement).build());
+		verify(organizatorView).createCardOnUserDesk(argThat(cardMatcher));
+		verifyNoMoreInteractions(organizatorView);
+		final Card needsImprovementCard = cardMatcher.getLastComparedCard();
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_POSTIT))
+				.entries(EntityMessageAdapter.toMessageEntries(needsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		reset(organizatorView);
+		reset(participantView);
+		
+		// Verify that no more votes can be added
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(needsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(needsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+		reset(organizatorView);
+		reset(participantView);
+
+		// Now remove the card with votes
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_EDIT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		reset(organizatorView);
+		reset(participantView);
+
+		// Verify that votes can be added now
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(needsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		verify(organizatorView).setVoteCountOwn(needsImprovementCard, 1);
+		verify(organizatorView).setVoteCountTotal(needsImprovementCard, 1);
+		verify(participantView).setVoteCountOwn(needsImprovementCard, 0);
+		verify(participantView).setVoteCountTotal(needsImprovementCard, 1);
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+		reset(organizatorView);
+		reset(participantView);
+
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(needsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		verify(organizatorView).setVoteCountOwn(needsImprovementCard, 1);
+		verify(organizatorView).setVoteCountTotal(needsImprovementCard, 2);
+		verify(participantView).setVoteCountOwn(needsImprovementCard, 1);
+		verify(participantView).setVoteCountTotal(needsImprovementCard, 2);
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+	}
+
+
+	@Test
+	public void removeCardWithVotesByParticipantAndAddVoteAgain() {
+		// Add all votes to one card
+		addMoreVotesThanAllowed();
+		reset(organizatorView);
+		reset(participantView);
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		verify(organizatorView).setVoteCountOwn(participantNeedsImprovementCard, 3);
+		verify(organizatorView).setVoteCountTotal(participantNeedsImprovementCard, 6);
+		verify(participantView).setVoteCountOwn(participantNeedsImprovementCard, 3);
+		verify(participantView).setVoteCountTotal(participantNeedsImprovementCard, 6);
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+		reset(organizatorView);
+		reset(participantView);
+
+		// And yet another improvement cards
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_CREATE_NEEDS_IMPROVEMENT)).build());
+		final CardDeepWithoutIdMatcher cardMatcher = new CardDeepWithoutIdMatcher(new Card.Builder().type(Type.NeedsImprovement).build());
+		verify(organizatorView).createCardOnUserDesk(argThat(cardMatcher));
+		verifyNoMoreInteractions(organizatorView);
+		final Card needsImprovementCard = cardMatcher.getLastComparedCard();
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_POSTIT))
+				.entries(EntityMessageAdapter.toMessageEntries(needsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		reset(organizatorView);
+		reset(participantView);
+		
+		// Verify that no more votes can be added
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(needsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(needsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+		reset(organizatorView);
+		reset(participantView);
+
+		// Now remove the card with votes
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_EDIT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		reset(organizatorView);
+		reset(participantView);
+
+		// Verify that votes can be added now
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(needsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		verify(organizatorView).setVoteCountOwn(needsImprovementCard, 1);
+		verify(organizatorView).setVoteCountTotal(needsImprovementCard, 1);
+		verify(participantView).setVoteCountOwn(needsImprovementCard, 0);
+		verify(participantView).setVoteCountTotal(needsImprovementCard, 1);
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+		reset(organizatorView);
+		reset(participantView);
+
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_VOTES_INCREMENT))
+				.entries(EntityMessageAdapter.toMessageEntries(needsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		verify(organizatorView).setVoteCountOwn(needsImprovementCard, 1);
+		verify(organizatorView).setVoteCountTotal(needsImprovementCard, 2);
+		verify(participantView).setVoteCountOwn(needsImprovementCard, 1);
+		verify(participantView).setVoteCountTotal(needsImprovementCard, 2);
+		verifyNoMoreInteractions(organizatorView);
+		verifyNoMoreInteractions(participantView);
+	}
+
 	//TODO: tests
-	// - remove card with votes and then try to vote again
 	// - modify card text
 	// - add more participants
 }

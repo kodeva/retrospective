@@ -73,12 +73,13 @@ public class Model {
 	 */
 	public final void deleteCard(Card card, String userDeskId) {
 		if (userDesk.getId().equals(userDeskId)) {
-			cardsOnUserDesk.remove(card);
+			if (cardsOnUserDesk.remove(card) != null) {
+				messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER).entries(EntityMessageAdapter.toMessageEntries(card))
+						.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
+						.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDeskId))
+						.build());
+			}
 		}
-		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER).entries(EntityMessageAdapter.toMessageEntries(card))
-				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
-				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDeskId))
-				.build());
 		synchronized(votes) {
 			final Iterator<Vote> votesIter = votes.iterator();
 			while (votesIter.hasNext()) {
