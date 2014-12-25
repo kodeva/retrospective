@@ -20,6 +20,7 @@ import kodeva.retrospective.view.View;
 
 import org.junit.After;
 import org.junit.Test;
+import org.mockito.Matchers;
 
 public class LocalControllerTest {
 	private static final long WAIT_MILLIS = 250L;
@@ -140,6 +141,41 @@ public class LocalControllerTest {
 		verifyNoMoreInteractions(participantView);
 	}
 	
+	@Test
+	public void startSession() {
+		createOrganizator();
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_START)).build());
+		verify(organizatorView).createPinWall();
+		verifyNoMoreInteractions(organizatorView);
+		
+		// Verify that session can be created just once
+		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_START)).build());
+		verifyNoMoreInteractions(organizatorView);
+	}
+	
+	@Test
+	public void connectToSession() {
+		createParticipant();
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_CONNECT)).build());
+		verify(participantView).showError(Matchers.anyString());
+		verifyNoMoreInteractions(participantView);
+		
+		startSession();
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_CONNECT)).build());
+		verify(participantView).createPinWall();
+		verifyNoMoreInteractions(participantView);
+		verifyNoMoreInteractions(organizatorView);
+
+		participantMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_CONNECT)).build());
+		verifyNoMoreInteractions(participantView);
+		verifyNoMoreInteractions(organizatorView);
+	}
+
 	private void startRetrospectiveSessionAndConnectClients() {
 		reset(organizatorView);
 		organizatorMessageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
@@ -153,7 +189,7 @@ public class LocalControllerTest {
 		verify(participantView).createPinWall();
 		verifyNoMoreInteractions(participantView);
 	}
-
+	
 	@Test
 	public void postCard() {
 		addNewWellDoneCard();

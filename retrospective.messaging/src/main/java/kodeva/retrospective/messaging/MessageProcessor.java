@@ -6,5 +6,10 @@ package kodeva.retrospective.messaging;
  * @author Stepan Hrbacek
  */
 public interface MessageProcessor {
+	/**
+	 * Processes a message
+	 * @param message
+	 *  message to be processed
+	 */
 	void process(Message message);
 }

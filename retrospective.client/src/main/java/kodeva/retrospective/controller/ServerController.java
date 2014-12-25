@@ -4,7 +4,6 @@ import kodeva.retrospective.controller.websockets.ServerWebSocketsEndpoint;
 import kodeva.retrospective.messaging.Message;
 import kodeva.retrospective.messaging.MessageBroker;
 import kodeva.retrospective.messaging.MessageFilter;
-import kodeva.retrospective.messaging.MessageProcessor;
 import kodeva.retrospective.model.Constants;
 import kodeva.retrospective.model.EntityMessageAdapter;
 import kodeva.retrospective.model.Model;
@@ -14,16 +13,18 @@ import kodeva.retrospective.model.Model;
  * 
  * @author Stepan Hrbacek
  */
-public class ServerController implements MessageProcessor {
+public class ServerController extends BaseController {
 	private final Model model;
 	private final MessageFilter viewFilter, modelFilter, controllerFilter;
-	private final MessageBroker messageBroker;
 
 	public ServerController(MessageBroker messageBroker, Model model) {
+		super(messageBroker);
 		this.model = model;
-		(this.messageBroker = messageBroker).subscribe(viewFilter = new MessageFilter.Builder().sender(kodeva.retrospective.view.Constants.Messaging.SENDER).build(), this);
+		this.messageBroker.subscribe(viewFilter = new MessageFilter.Builder().sender(kodeva.retrospective.view.Constants.Messaging.SENDER).build(), this);
 		this.messageBroker.subscribe(modelFilter = new MessageFilter.Builder().sender(kodeva.retrospective.model.Constants.Messaging.SENDER).build(), this);
-		this.messageBroker.subscribe(controllerFilter = new MessageFilter.Builder().sender(kodeva.retrospective.controller.Constants.Messaging.SENDER).build(), this);
+		this.messageBroker.subscribe(controllerFilter = new MessageFilter.Builder().sender(kodeva.retrospective.controller.Constants.Messaging.SENDER).build().
+				and(new MessageFilter.Builder().key(kodeva.retrospective.controller.Constants.Messaging.Key.EVENT).build().not()), this);
+
 		ServerWebSocketsEndpoint.start(this.messageBroker);
 	}
 
@@ -35,7 +36,7 @@ public class ServerController implements MessageProcessor {
 	}
 
 	@Override
-	public void process(Message message) {
+	public void processMessage(Message message) {
 		String userDeskId = model.getUserDesk().getId(); 
 		switch (message.getSender()) {
 		case kodeva.retrospective.controller.Constants.Messaging.SENDER:

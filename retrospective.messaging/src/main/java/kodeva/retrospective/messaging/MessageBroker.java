@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Message broker for exchanging messages among components.
@@ -13,6 +15,7 @@ import java.util.Map;
  * @author Stepan Hrbacek
  */
 public class MessageBroker {
+	private static final Logger LOGGER = Logger.getLogger(MessageBroker.class.getName());
 
 	private Collection<Map.Entry<MessageFilter, MessageProcessor>> subscriptions = Collections.synchronizedCollection(new ArrayList<Map.Entry<MessageFilter, MessageProcessor>>());
 
@@ -38,7 +41,11 @@ public class MessageBroker {
 		}
 
 		for (MessageProcessor processor : processors) {
-			processor.process(message);
+			try {
+				processor.process(message);
+			} catch (Throwable t) {
+	    		LOGGER.log(Level.SEVERE, String.format("Error processing message: '%s'", message), t);
+			}
 		}
 	}
 

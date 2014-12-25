@@ -3,7 +3,6 @@ package kodeva.retrospective.controller;
 import kodeva.retrospective.messaging.Message;
 import kodeva.retrospective.messaging.MessageBroker;
 import kodeva.retrospective.messaging.MessageFilter;
-import kodeva.retrospective.messaging.MessageProcessor;
 import kodeva.retrospective.model.Constants;
 import kodeva.retrospective.model.EntityMessageAdapter;
 import kodeva.retrospective.model.Model;
@@ -16,23 +15,24 @@ import kodeva.retrospective.view.View;
  * 
  * @author Stepan Hrbacek
  */
-public class LocalController implements MessageProcessor {
+public class LocalController extends BaseController {
 	private final Model model;
 	private final View view;
-	private final MessageBroker messageBroker;
 	private ClientController clientController;
 	private ServerController serverController;
 
 	public LocalController(MessageBroker messageBroker, View view) {
-		model = new Model(this.messageBroker = messageBroker);
+		super(messageBroker);
+		model = new Model(this.messageBroker);
 		this.view = view;
 		view.createUserDesk(model.getUserDesk());
-		messageBroker.subscribe(new MessageFilter.Builder().sender(kodeva.retrospective.view.Constants.Messaging.SENDER).build(), this);
-		messageBroker.subscribe(new MessageFilter.Builder().sender(kodeva.retrospective.model.Constants.Messaging.SENDER).build(), this);
+		this.messageBroker.subscribe(new MessageFilter.Builder().sender(kodeva.retrospective.view.Constants.Messaging.SENDER).build(), this);
+		this.messageBroker.subscribe(new MessageFilter.Builder().sender(kodeva.retrospective.model.Constants.Messaging.SENDER).build(), this);
+		this.messageBroker.subscribe(new MessageFilter.Builder().key(kodeva.retrospective.controller.Constants.Messaging.Key.EVENT).build(), this);
 	}
 	
 	@Override
-	public void process(Message message) {
+	public void processMessage(Message message) {
 		switch (message.getSender()) {
 		case kodeva.retrospective.view.Constants.Messaging.SENDER:
 			switch (message.getValues(kodeva.retrospective.view.Constants.Messaging.Key.EVENT).iterator().next()) {
@@ -141,6 +141,17 @@ public class LocalController implements MessageProcessor {
 				}
 				break;
 			}
+			}
+			break;
+
+		case kodeva.retrospective.controller.Constants.Messaging.SENDER:
+			// Project model messages received over wire to local model changes
+			switch (message.getValues(kodeva.retrospective.controller.Constants.Messaging.Key.EVENT).iterator().next()) {
+			case kodeva.retrospective.controller.Constants.Messaging.Value.KEY_EVENT_ERROR:
+				view.showError(String.format("Error occured during processing of message:%n%s%n%nStacktrace:%n%s",
+						message.getValues(kodeva.retrospective.controller.Constants.Messaging.Key.ERROR_ORIGINAL_MESSAGE).iterator().next(),
+						message.getValues(kodeva.retrospective.controller.Constants.Messaging.Key.ERROR_STACKTRACE).iterator().next()));;
+				break;
 			}
 			break;
 		}

@@ -202,4 +202,13 @@ public class View {
 			}
 		});
 	}
+	
+	/**
+	 * Shows error message.
+	 * @param errorMessage
+	 *  error message (in plaintext)
+	 */
+	public void showError(final String errorMessage) {
+		//TODO:
+	}
 }
