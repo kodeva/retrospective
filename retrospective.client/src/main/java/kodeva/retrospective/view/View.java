@@ -16,6 +16,7 @@ public class View {
 	private WentWellArea wentWellArea;
 	private NeedsImprovementArea needsImprovementArea;
 	private final MessageBroker messageBroker;
+	private final ButtonMenu menu;
 
 	public View(MessageBroker messageBroker) {
 		this.messageBroker = messageBroker;
@@ -24,7 +25,7 @@ public class View {
 		feedback.setPadding(new Insets(2));
 		feedback.setSpacing(3);
 
-		final ButtonMenu menu = new ButtonMenu(messageBroker);
+		menu = new ButtonMenu(messageBroker);
 		menu.prefWidthProperty().bind(feedback.widthProperty());
 		feedback.getChildren().add(menu.getNode());
 	}
