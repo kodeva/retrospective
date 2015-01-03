@@ -43,16 +43,21 @@ public class MessageTest {
 
 		final Map.Entry<String, String> entry1 = new AbstractMap.SimpleEntry<>("key1", "value1");
 		final Map.Entry<String, String> entry2 = new AbstractMap.SimpleEntry<>("key2", "value2");
-		final Message msg = new Message.Builder().sender("Alice").entry(entry1).entry(entry2).build();
+		final Message msg = new Message.Builder().sender("Alice").receiver("Bob").entry(entry1).entry(entry2).build();
 		assertTrue(msg.containsKey(Message.MessageEntryKey.Sender.toString()));
+		assertTrue(msg.containsKey(Message.MessageEntryKey.Receiver.toString()));
 		assertTrue(msg.containsKey("key1"));
 		assertTrue(msg.containsKey("key2"));
 		assertTrue(msg.containsEntry(new AbstractMap.SimpleImmutableEntry<>(Message.MessageEntryKey.Sender.toString(), "Alice")));
+		assertTrue(msg.containsEntry(new AbstractMap.SimpleImmutableEntry<>(Message.MessageEntryKey.Receiver.toString(), "Bob")));
 		assertTrue(msg.containsEntry(entry1));
 		assertTrue(msg.containsEntry(entry2));
 		
 		// Test that Message makes its own copy of each entry
 		entry1.setValue("value1-new");
 		assertFalse(msg.containsEntry(entry1));
+
+		final Message msgWithoutReceiver = new Message.Builder().sender("Alice").build();
+		assertNull(msgWithoutReceiver.getReceiver());
 	}
 }

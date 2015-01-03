@@ -1,6 +1,7 @@
 package kodeva.retrospective.controller.websockets;
 
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,7 +32,13 @@ public class ServerWebSocketsEndpoint {
 
 	@OnOpen
     public void onOpen(Session session) {
+    	if (LOGGER.isLoggable(Level.INFO)) {
+    		LOGGER.info(String.format("Openned session '%s'", session.getId()));
+    	}
 		sessions.add(session);
+		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_CONNECT))
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.CLIENT_ID, session.getId())).build());
     }
  
     @OnMessage
@@ -44,20 +51,29 @@ public class ServerWebSocketsEndpoint {
  
     @OnClose
     public void onClose(Session session, CloseReason closeReason) {
-    	sessions.remove(session);
-    	//TODO: send notification message that session was terminated (to all existing session - to refresh participants list)
+    	if (LOGGER.isLoggable(Level.INFO)) {
+    		LOGGER.info(String.format("Closed session '%s'", session.getId()));
+    	}
+    	if (sessions != null) {
+    		sessions.remove(session);
+        	//TODO: send notification message that session was terminated (to all existing session - to refresh participants list)
+    	}
     }
 
     public static void send(Message message) {
     	if (server == null) {
     		return;
     	}
+    	final String receiverId = message.getReceiver();
     	try {
     		final String messageStr = message.toString();
     		synchronized(sessions) {
     			Iterator<Session> sessionsIter = sessions.iterator();
     			while (sessionsIter.hasNext()) {
-        			sessionsIter.next().getBasicRemote().sendText(messageStr);
+    				final Session session = sessionsIter.next();
+    				if ((receiverId == null) || session.getId().equals(receiverId)) {
+    					session.getBasicRemote().sendText(messageStr);
+    				}
     			}
     		}
 		} catch (IOException e) {

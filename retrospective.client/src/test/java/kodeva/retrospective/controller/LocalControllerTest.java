@@ -2,10 +2,7 @@ package kodeva.retrospective.controller;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.*;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -862,7 +859,9 @@ public class LocalControllerTest {
 					.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_CONNECT)).build());
 			verify(observer.view).createCardOnPinWall(organizatorWentWellCard);
 			verify(observer.view).createCardOnPinWall(participantNeedsImprovementCard);
-			verify(observer.view).setVoteCountOwn(participantNeedsImprovementCard, 0);
+			verify(observer.view, times(3)).setVoteCountOwn(participantNeedsImprovementCard, 0);
+			verify(observer.view).setVoteCountTotal(participantNeedsImprovementCard, 0);
+			verify(observer.view).setVoteCountTotal(participantNeedsImprovementCard, 1);
 			verify(observer.view).setVoteCountTotal(participantNeedsImprovementCard, 2);
 		} finally {
 			observer.messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
@@ -873,4 +872,7 @@ public class LocalControllerTest {
 			}
 		}
 	}
+
+	// Tests TODOs:
+	// - showing list of connected participants (after connect and disconnect)
 }

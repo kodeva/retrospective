@@ -268,6 +268,21 @@ public class Model {
 	public UserDesk getUserDesk() {
 		return userDesk;
 	}
+	
+	/**
+	 * Pushes model to destination by creating model events with receiver id.
+	 * 
+	 * @param receiverId
+	 *  destination identification
+	 */
+	public void pushModel(String receiverId) {
+		for (Map.Entry<Card, AbstractEntity> entry : cardsOnPinWall.entrySet()) {
+			messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER).receiver(receiverId)
+					.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_PUBLISH))
+					.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDesk.getId()))
+					.entries(EntityMessageAdapter.toMessageEntries(entry.getKey())).build());
+		}
+	}
 
 	/**
 	 * @param userDeskId

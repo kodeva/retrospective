@@ -79,6 +79,18 @@ public class Message {
 		return getValues(MessageEntryKey.Sender.toString()).iterator().next();
 	}
 	
+	/**
+	 * Returns message receiver.
+	 * @return
+	 *  message receiver identifier, or <code>null</code> if no receiver specified.
+	 */
+	public String getReceiver() {
+		if (! containsKey(MessageEntryKey.Receiver.toString())) {
+			return null;
+		}
+		return getValues(MessageEntryKey.Receiver.toString()).iterator().next();
+	}
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
@@ -99,7 +111,8 @@ public class Message {
 	 * Key for well-known message entry types.
 	 */
 	static enum MessageEntryKey {
-		Sender;
+		Sender,
+		Receiver;
 	}
 	
 	/**
@@ -226,6 +239,19 @@ public class Message {
 		public Builder sender(String sender) {
 			entries.removeAll(getEntriesContainingKey(entries, MessageEntryKey.Sender.toString()));
 			entries.add(new AbstractMap.SimpleImmutableEntry<String, String>(MessageEntryKey.Sender.toString(), sender));
+			return this;
+		}
+
+		/**
+		 * Specifies message receiver. Overwrites any previously specified receiver.
+		 * @param receiver
+		 *  message receiver
+		 * @return
+		 * 	this instance
+		 */
+		public Builder receiver(String receiver) {
+			entries.removeAll(getEntriesContainingKey(entries, MessageEntryKey.Receiver.toString()));
+			entries.add(new AbstractMap.SimpleImmutableEntry<String, String>(MessageEntryKey.Receiver.toString(), receiver));
 			return this;
 		}
 

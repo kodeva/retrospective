@@ -40,6 +40,11 @@ public final class Constants {
 			 * Message key for error stacktrace.
 			 */
 			public static final String ERROR_STACKTRACE = SENDER + ":error:stacktrace";
+			
+			/**
+			 * Message key for a client id.
+			 */
+			public static final String CLIENT_ID = SENDER + ":client:id";
 		}
 
 		/**
@@ -53,6 +58,11 @@ public final class Constants {
 			 * Event message key for error.
 			 */
 			public static final String KEY_EVENT_ERROR = "error";
+
+			/**
+			 * Event message key for connecting a client to a retrospective session.
+			 */
+			public static final String KEY_EVENT_SESSION_CONNECT = "session:connect";
 		}
 	}
 }
