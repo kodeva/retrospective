@@ -27,6 +27,7 @@ public class Model {
 	private final Map<Card, AbstractEntity> cardsOnUserDesk;
 	private final Map<Card, AbstractEntity> cardsOnPinWall;
 	private final Set<Vote> votes;
+	private int modelVersion;
 
 	public Model(MessageBroker messageBroker) {
 		this.messageBroker = messageBroker;
@@ -37,6 +38,7 @@ public class Model {
 		cardsOnUserDesk = Collections.synchronizedMap(new HashMap<Card, AbstractEntity>());
 		cardsOnPinWall = Collections.synchronizedMap(new HashMap<Card, AbstractEntity>());
 		votes = Collections.synchronizedSet(new HashSet<Vote>());
+		modelVersion = 0;
 	}
 
 	/**
@@ -47,7 +49,7 @@ public class Model {
 	public final void createCard(Card card) {
 		if (! cardsOnUserDesk.containsKey(card) && ! cardsOnPinWall.containsKey(card)) {
 			cardsOnUserDesk.put(card, userDesk);
-			messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+			messageBroker.sendMessage(createMessageBuilder()
 					.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_ADD))
 					.entries(EntityMessageAdapter.toMessageEntries(card)).build());
 		}
@@ -71,23 +73,22 @@ public class Model {
 	 * @param userDeskId
 	 *  id of user desk from which the card should be removed
 	 */
-	public final void deleteCard(Card card, String userDeskId) {
+	public final synchronized void deleteCard(Card card, String userDeskId) {
 		if (userDesk.getId().equals(userDeskId)) {
 			if (cardsOnUserDesk.remove(card) != null) {
-				messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER).entries(EntityMessageAdapter.toMessageEntries(card))
+				messageBroker.sendMessage(createMessageBuilder().entries(EntityMessageAdapter.toMessageEntries(card))
 						.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_DELETE))
 						.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDeskId))
 						.build());
 			}
 		}
-		synchronized(votes) {
-			final Iterator<Vote> votesIter = votes.iterator();
-			while (votesIter.hasNext()) {
-				if (card.getId().equals(votesIter.next().getCardId())) {
-					votesIter.remove();
-				}
-				
+
+		final Iterator<Vote> votesIter = votes.iterator();
+		while (votesIter.hasNext()) {
+			if (card.getId().equals(votesIter.next().getCardId())) {
+				votesIter.remove();
 			}
+			
 		}
 	}
 
@@ -98,10 +99,10 @@ public class Model {
 	 * @param userDeskId
 	 *  UserDesk ID
 	 */
-	public final void publishCard(Card card, String userDeskId) {
+	public final synchronized void publishCard(Card card, String userDeskId) {
 		cardsOnUserDesk.remove(card);
 		cardsOnPinWall.put(card, pinWall);
-		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		messageBroker.sendMessage(createMessageBuilder()
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_PUBLISH))
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDeskId))
 				.entries(EntityMessageAdapter.toMessageEntries(card)).build());
@@ -114,42 +115,34 @@ public class Model {
 	 * @param userDeskId
 	 *  UserDesk ID
 	 */
-	public final void unpublishCard(Card card, String userDeskId) {
+	public final synchronized void unpublishCard(Card card, String userDeskId) {
 		cardsOnPinWall.remove(card);
 		if (userDesk.getId().equals(userDeskId)) {
 			cardsOnUserDesk.put(card, userDesk);
 		}
-		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		messageBroker.sendMessage(createMessageBuilder()
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_UNPUBLISH))
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDeskId))
 				.entries(EntityMessageAdapter.toMessageEntries(card)).build());
 	}
 
 	/**
-	 * Updates the card on User desk or PinWall.
+	 * Updates the card on UserDesk.
 	 * @param cardOrig
 	 *  original card
 	 * @param cardNew
 	 *  new card
 	 */
-	public final void updateCard(Card cardOrig, Card cardNew) {
-		final Map<Card, AbstractEntity> cardsContainer;
-		final String cardContainerType;
-		if (cardsOnUserDesk.containsKey(cardOrig)) {
-			cardsContainer = cardsOnUserDesk;
-			cardContainerType = Constants.Messaging.Value.KEY_CARD_CONTAINER_TYPE_USER_DESK;
-		} else if (cardsOnUserDesk.containsKey(cardOrig)) {
-			cardsContainer = cardsOnPinWall;
-			cardContainerType = Constants.Messaging.Value.KEY_CARD_CONTAINER_TYPE_PINWALL;
-		} else {
+	public final synchronized void updateCard(Card cardOrig, Card cardNew) {
+		if (! cardsOnUserDesk.containsKey(cardOrig)) {
 			return;
 		}
 
-		final AbstractEntity cardsContainerEntity = cardsContainer.remove(cardOrig);
-		cardsContainer.put(cardNew, cardsContainerEntity);
-		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+		final AbstractEntity cardsContainerEntity = cardsOnUserDesk.remove(cardOrig);
+		cardsOnUserDesk.put(cardNew, cardsContainerEntity);
+		messageBroker.sendMessage(createMessageBuilder()
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_UPDATE))
-				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.CARD_CONTAINER_TYPE, cardContainerType))
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.CARD_CONTAINER_TYPE, Constants.Messaging.Value.KEY_CARD_CONTAINER_TYPE_USER_DESK))
 				.entries(EntityMessageAdapter.toMessageEntries(cardNew)).build());
 	}
 	
@@ -160,7 +153,7 @@ public class Model {
 	 * @param userDeskId
 	 *  UserDesk ID
 	 */
-	public final void addVote(Card card, String userDeskId) {
+	public final synchronized void addVote(Card card, String userDeskId) {
 		if (! cardsOnPinWall.containsKey(card)) {
 			return;
 		}
@@ -173,7 +166,7 @@ public class Model {
 		if (getUserDeskVotes(userDeskId).size() < Constants.MAXIMUM_VOTES_PER_USER_PER_SESSION) {
 			final Vote vote = new Vote.Builder().card(card).userDeskId(userDeskId).session(session).build();
 			votes.add(vote);
-			messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+			messageBroker.sendMessage(createMessageBuilder()
 					.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_VOTE_ADD))
 					.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDeskId))
 					.entries(EntityMessageAdapter.toMessageEntries(card)).build());
@@ -187,7 +180,7 @@ public class Model {
 	 * @param userDeskId
 	 *  UserDesk ID
 	 */
-	public final void removeVote(Card card, String userDeskId) {
+	public final synchronized void removeVote(Card card, String userDeskId) {
 		if (! cardsOnPinWall.containsKey(card)) {
 			return;
 		}
@@ -207,7 +200,7 @@ public class Model {
 			
 			if (voteToRemove != null) {
 				votes.remove(voteToRemove);
-				messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				messageBroker.sendMessage(createMessageBuilder()
 						.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_VOTE_REMOVE))
 						.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDeskId))
 						.entries(EntityMessageAdapter.toMessageEntries(card)).build());
@@ -222,13 +215,11 @@ public class Model {
 	 * @return
 	 *  count of own votes assigned to the card
 	 */
-	public final int getVotesCountOwn(Card card) {
+	public final synchronized int getVotesCountOwn(Card card) {
 		int votesCount = 0;
-		synchronized(votes) {
-			for (Vote vote : votes) {
-				if (card.getId().equals(vote.getCardId()) && userDesk.getId().equals(vote.getUserDeskId())) {
-					votesCount++;
-				}
+		for (Vote vote : votes) {
+			if (card.getId().equals(vote.getCardId()) && userDesk.getId().equals(vote.getUserDeskId())) {
+				votesCount++;
 			}
 		}
 		return votesCount;
@@ -241,13 +232,11 @@ public class Model {
 	 * @return
 	 *  count of all votes assigned to the card
 	 */
-	public final int getVotesCountTotal(Card card) {
+	public final synchronized int getVotesCountTotal(Card card) {
 		int votesCount = 0;
-		synchronized(votes) {
-			for (Vote vote : votes) {
-				if (card.getId().equals(vote.getCardId())) {
-					votesCount++;
-				}
+		for (Vote vote : votes) {
+			if (card.getId().equals(vote.getCardId())) {
+				votesCount++;
 			}
 		}
 		return votesCount;
@@ -270,21 +259,6 @@ public class Model {
 	}
 	
 	/**
-	 * Pushes model to destination by creating model events with receiver id.
-	 * 
-	 * @param receiverId
-	 *  destination identification
-	 */
-	public void pushModel(String receiverId) {
-		for (Map.Entry<Card, AbstractEntity> entry : cardsOnPinWall.entrySet()) {
-			messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER).receiver(receiverId)
-					.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_PUBLISH))
-					.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.USER_DESK_ID, userDesk.getId()))
-					.entries(EntityMessageAdapter.toMessageEntries(entry.getKey())).build());
-		}
-	}
-
-	/**
 	 * @param userDeskId
 	 *  UserDesk ID
 	 * @return user's votes for given UserDesk
@@ -305,5 +279,10 @@ public class Model {
 		}
 
 		return userSessionVotes;
+	}
+	
+	private Message.Builder createMessageBuilder() {
+		return new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.MODEL_VERSION, Integer.toString(modelVersion)));
 	}
 }

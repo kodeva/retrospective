@@ -1,7 +1,6 @@
 package kodeva.retrospective.controller.websockets;
 
 import java.io.IOException;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,9 +35,6 @@ public class ServerWebSocketsEndpoint {
     		LOGGER.info(String.format("Openned session '%s'", session.getId()));
     	}
 		sessions.add(session);
-		messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
-				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_SESSION_CONNECT))
-				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.CLIENT_ID, session.getId())).build());
     }
  
     @OnMessage

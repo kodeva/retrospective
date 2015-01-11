@@ -70,6 +70,13 @@ public final class Constants {
 			 * Message key for pin wall id.
 			 */
 			public static final String PIN_WALL_ID = SENDER + ":pin-wall-id";
+			
+			/**
+			 * Message key for model version:
+			 * - messages with older versions are ignored
+			 * - messages with newer versions are queued until model sync message comes
+			 */
+			public static final String MODEL_VERSION = SENDER + ":model-version";
 		}
 
 		/**

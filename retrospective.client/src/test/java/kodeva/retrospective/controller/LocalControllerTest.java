@@ -120,12 +120,40 @@ public class LocalControllerTest {
 		addNewWellDoneCard();
 		reset(organizator.view);
 
+		// update card on UserDesk
 		organizator.messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_UPDATE_FRONT_SIDE_TEXT))
 				.entries(EntityMessageAdapter.toMessageEntries(organizatorWentWellCard))
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.UPDATED_VALUE, "Updated text")).build());
 		final CardDeepWithoutIdMatcher cardMatcher = new CardDeepWithoutIdMatcher(new Card.Builder().type(Type.WentWell).frontSideText("Updated text").build());
 		verify(organizator.view).updateCardOnUserDesk(argThat(cardMatcher));
+		verifyNoMoreInteractions(organizator.view);
+
+		// update card on PinWall not allowed
+		participant = createMockedParticipant();
+		startRetrospectiveSessionAndConnectClients();
+		organizator.messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_POSTIT))
+				.entries(EntityMessageAdapter.toMessageEntries(organizatorWentWellCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		reset(organizator.view);
+		reset(participant.view);
+
+		organizator.messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_UPDATE_FRONT_SIDE_TEXT))
+				.entries(EntityMessageAdapter.toMessageEntries(organizatorWentWellCard))
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.UPDATED_VALUE, "Updated text 2nd")).build());
+		verifyNoMoreInteractions(organizator.view);
+		verifyNoMoreInteractions(participant.view);
+
+		participant.messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_UPDATE_FRONT_SIDE_TEXT))
+				.entries(EntityMessageAdapter.toMessageEntries(organizatorWentWellCard))
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.UPDATED_VALUE, "Updated text 3rd")).build());
+		verifyNoMoreInteractions(participant.view);
 		verifyNoMoreInteractions(organizator.view);
 	}
 
@@ -134,12 +162,40 @@ public class LocalControllerTest {
 		addNewImprovementCard();
 		reset(participant.view);
 
+		// update card on UserDesk
 		participant.messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_UPDATE_FRONT_SIDE_TEXT))
 				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard))
 				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.UPDATED_VALUE, "Updated text")).build());
 		final CardDeepWithoutIdMatcher cardMatcher = new CardDeepWithoutIdMatcher(new Card.Builder().type(Type.NeedsImprovement).frontSideText("Updated text").build());
 		verify(participant.view).updateCardOnUserDesk(argThat(cardMatcher));
+		verifyNoMoreInteractions(participant.view);
+
+		// update card on PinWall not allowed
+		organizator = createMockedParticipant();
+		startRetrospectiveSessionAndConnectClients();
+		participant.messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_POSTIT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard)).build());
+		try {
+			Thread.sleep(WAIT_MILLIS);
+		} catch (InterruptedException e) {
+		}
+		reset(organizator.view);
+		reset(participant.view);
+
+		participant.messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_UPDATE_FRONT_SIDE_TEXT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard))
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.UPDATED_VALUE, "Updated text 2nd")).build());
+		verifyNoMoreInteractions(participant.view);
+		verifyNoMoreInteractions(organizator.view);
+
+		organizator.messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER)
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_CARD_UPDATE_FRONT_SIDE_TEXT))
+				.entries(EntityMessageAdapter.toMessageEntries(participantNeedsImprovementCard))
+				.entry(new AbstractMap.SimpleEntry<>(Constants.Messaging.Key.UPDATED_VALUE, "Updated text 3rd")).build());
+		verifyNoMoreInteractions(organizator.view);
 		verifyNoMoreInteractions(participant.view);
 	}
 	
@@ -875,4 +931,5 @@ public class LocalControllerTest {
 
 	// Tests TODOs:
 	// - showing list of connected participants (after connect and disconnect)
+	// - concurrent run of multiple client producing events (in separate threads)
 }

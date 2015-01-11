@@ -23,9 +23,7 @@ public class ServerController extends BaseController {
 		this.messageBroker.subscribe(viewFilter = new MessageFilter.Builder().sender(kodeva.retrospective.view.Constants.Messaging.SENDER).build(), this);
 		this.messageBroker.subscribe(modelFilter = new MessageFilter.Builder().sender(kodeva.retrospective.model.Constants.Messaging.SENDER).build(), this);
 		this.messageBroker.subscribe(controllerFilter = new MessageFilter.Builder().sender(kodeva.retrospective.controller.Constants.Messaging.SENDER).build().
-				and(new MessageFilter.Builder().key(kodeva.retrospective.controller.Constants.Messaging.Key.EVENT).build().not().
-						or(new MessageFilter.Builder().key(kodeva.retrospective.controller.Constants.Messaging.Key.EVENT).
-								value(kodeva.retrospective.controller.Constants.Messaging.Value.KEY_EVENT_SESSION_CONNECT).build())), this);
+				and(new MessageFilter.Builder().key(kodeva.retrospective.controller.Constants.Messaging.Key.EVENT).build().not()), this);
 
 		ServerWebSocketsEndpoint.start(this.messageBroker);
 	}
@@ -42,15 +40,6 @@ public class ServerController extends BaseController {
 		String userDeskId = model.getUserDesk().getId(); 
 		switch (message.getSender()) {
 		case kodeva.retrospective.controller.Constants.Messaging.SENDER:
-			if (message.containsKey(kodeva.retrospective.controller.Constants.Messaging.Key.EVENT)) {
-				switch (message.getValues(kodeva.retrospective.controller.Constants.Messaging.Key.EVENT).iterator().next()) {
-				case kodeva.retrospective.controller.Constants.Messaging.Value.KEY_EVENT_SESSION_CONNECT:
-					model.pushModel(message.getValues(kodeva.retrospective.controller.Constants.Messaging.Key.CLIENT_ID).iterator().next());
-					break;
-				}
-				break; // exit switch statement
-			}
-
 			// Messages received over wire must always contain UserDesk ID
 			userDeskId = message.getValues(Constants.Messaging.Key.USER_DESK_ID).iterator().next();
 
