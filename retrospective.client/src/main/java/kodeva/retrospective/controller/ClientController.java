@@ -42,7 +42,7 @@ public class ClientController extends BaseController {
 		case kodeva.retrospective.model.Constants.Messaging.SENDER:
 		case kodeva.retrospective.view.Constants.Messaging.SENDER:
 			// Send non-local view messages for confirmation / model messages for propagation over wire
-			switch (message.getValues(kodeva.retrospective.view.Constants.Messaging.Key.EVENT).iterator().next()) {
+			switch (message.getValue(kodeva.retrospective.view.Constants.Messaging.Key.EVENT)) {
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_DELETE:
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_POSTIT:
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_EDIT:
@@ -59,23 +59,26 @@ public class ClientController extends BaseController {
 
 		case kodeva.retrospective.controller.Constants.Messaging.SENDER:
 			// Project model messages received over wire to local model changes
-			final String userDeskId = message.getValues(Constants.Messaging.Key.USER_DESK_ID).iterator().next();
-			switch (message.getValues(kodeva.retrospective.model.Constants.Messaging.Key.EVENT).iterator().next()) {
-			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_DELETE:
-				model.deleteCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
-				break;
-			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_PUBLISH:
-				model.publishCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
-				break;
-			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_UNPUBLISH:
-				model.unpublishCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
-				break;
-			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_VOTE_ADD:
-				model.addVote(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
-				break;
-			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_VOTE_REMOVE:
-				model.removeVote(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
-				break;
+			final String userDeskId = message.getValue(Constants.Messaging.Key.USER_DESK_ID);
+			final int modelVersion = Integer.valueOf(message.getValue(Constants.Messaging.Key.MODEL_VERSION));
+			if (modelVersion >= model.getModelVersion()) {
+				switch (message.getValue(kodeva.retrospective.model.Constants.Messaging.Key.EVENT)) {
+				case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_DELETE:
+					model.deleteCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
+					break;
+				case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_PUBLISH:
+					model.publishCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
+					break;
+				case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_UNPUBLISH:
+					model.unpublishCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
+					break;
+				case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_VOTE_ADD:
+					model.addVote(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
+					break;
+				case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_VOTE_REMOVE:
+					model.removeVote(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
+					break;
+				}
 			}
 			break;
 		}

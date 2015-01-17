@@ -71,12 +71,30 @@ public class Message {
 	}
 	
 	/**
+	 * Returns the first item from the collection of values of all entries with given key.
+	 * @param key
+	 *  key id
+	 * @return
+	 *  the first item from the collection of values of all entries with given key / <code>null</code> if no entries with given key exist.
+	 */
+	public String getValue(String key) {
+		final Iterator<Map.Entry<String, String>> iter = entries.iterator();
+		while (iter.hasNext()) {
+			final Map.Entry<String, String> entry = iter.next();
+			if (entry.getKey().equals(key)) {
+				return entry.getValue();
+			}
+		}
+		return null;
+	}
+	
+	/**
 	 * Returns message sender.
 	 * @return
 	 *  message sender identifier
 	 */
 	public String getSender() {
-		return getValues(MessageEntryKey.Sender.toString()).iterator().next();
+		return getValue(MessageEntryKey.Sender.toString());
 	}
 	
 	/**
@@ -85,10 +103,7 @@ public class Message {
 	 *  message receiver identifier, or <code>null</code> if no receiver specified.
 	 */
 	public String getReceiver() {
-		if (! containsKey(MessageEntryKey.Receiver.toString())) {
-			return null;
-		}
-		return getValues(MessageEntryKey.Receiver.toString()).iterator().next();
+		return getValue(MessageEntryKey.Receiver.toString());
 	}
 	
 	/* (non-Javadoc)

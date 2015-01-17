@@ -41,10 +41,10 @@ public class ServerController extends BaseController {
 		switch (message.getSender()) {
 		case kodeva.retrospective.controller.Constants.Messaging.SENDER:
 			// Messages received over wire must always contain UserDesk ID
-			userDeskId = message.getValues(Constants.Messaging.Key.USER_DESK_ID).iterator().next();
+			userDeskId = message.getValue(Constants.Messaging.Key.USER_DESK_ID);
 
 		case kodeva.retrospective.view.Constants.Messaging.SENDER:
-			switch (message.getValues(kodeva.retrospective.view.Constants.Messaging.Key.EVENT).iterator().next()) {
+			switch (message.getValue(kodeva.retrospective.view.Constants.Messaging.Key.EVENT)) {
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_DELETE:
 				model.deleteCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
 				break;
@@ -64,7 +64,7 @@ public class ServerController extends BaseController {
 			break;
 
 		case kodeva.retrospective.model.Constants.Messaging.SENDER:
-			switch (message.getValues(kodeva.retrospective.model.Constants.Messaging.Key.EVENT).iterator().next()) {
+			switch (message.getValue(kodeva.retrospective.model.Constants.Messaging.Key.EVENT)) {
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_DELETE:
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_PUBLISH:
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_UNPUBLISH:

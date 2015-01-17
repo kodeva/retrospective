@@ -35,7 +35,7 @@ public class LocalController extends BaseController {
 	public void processMessage(Message message) {
 		switch (message.getSender()) {
 		case kodeva.retrospective.view.Constants.Messaging.SENDER:
-			switch (message.getValues(kodeva.retrospective.view.Constants.Messaging.Key.EVENT).iterator().next()) {
+			switch (message.getValue(kodeva.retrospective.view.Constants.Messaging.Key.EVENT)) {
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_SESSION_CONNECT:
 				if ((clientController == null) && (serverController == null)) {
 					clientController = new ClientController(messageBroker, model);
@@ -74,7 +74,7 @@ public class LocalController extends BaseController {
 			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_UPDATE_FRONT_SIDE_TEXT:
 				final Card.Builder builder = EntityMessageAdapter.toCardBuilder(message); 
 				final Card cardOrig = builder.build();
-				final String frontSideTextNew = message.getValues(kodeva.retrospective.view.Constants.Messaging.Key.UPDATED_VALUE).iterator().next();
+				final String frontSideTextNew = message.getValue(kodeva.retrospective.view.Constants.Messaging.Key.UPDATED_VALUE);
 				final Card cardNew = builder.frontSideText(frontSideTextNew).build();
 				model.updateCard(cardOrig, cardNew);
 				break;
@@ -84,10 +84,10 @@ public class LocalController extends BaseController {
 		case kodeva.retrospective.model.Constants.Messaging.SENDER:
 			String userDeskId = null;
 			if (message.containsKey(Constants.Messaging.Key.USER_DESK_ID)) {
-				userDeskId = message.getValues(Constants.Messaging.Key.USER_DESK_ID).iterator().next();
+				userDeskId = message.getValue(Constants.Messaging.Key.USER_DESK_ID);
 			}
 
-			switch (message.getValues(kodeva.retrospective.model.Constants.Messaging.Key.EVENT).iterator().next()) {
+			switch (message.getValue(kodeva.retrospective.model.Constants.Messaging.Key.EVENT)) {
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_ADD:
 				view.createCardOnUserDesk(EntityMessageAdapter.toCardBuilder(message).build());
 				break;
@@ -98,7 +98,7 @@ public class LocalController extends BaseController {
 				break;
 			}
 			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_UPDATE:
-				final String containerType = message.getValues(kodeva.retrospective.model.Constants.Messaging.Key.CARD_CONTAINER_TYPE).iterator().next();
+				final String containerType = message.getValue(kodeva.retrospective.model.Constants.Messaging.Key.CARD_CONTAINER_TYPE);
 				switch (containerType) {
 				case kodeva.retrospective.model.Constants.Messaging.Value.KEY_CARD_CONTAINER_TYPE_USER_DESK:
 					view.updateCardOnUserDesk(EntityMessageAdapter.toCardBuilder(message).build());
@@ -146,11 +146,11 @@ public class LocalController extends BaseController {
 
 		case kodeva.retrospective.controller.Constants.Messaging.SENDER:
 			// Project model messages received over wire to local model changes
-			switch (message.getValues(kodeva.retrospective.controller.Constants.Messaging.Key.EVENT).iterator().next()) {
+			switch (message.getValue(kodeva.retrospective.controller.Constants.Messaging.Key.EVENT)) {
 			case kodeva.retrospective.controller.Constants.Messaging.Value.KEY_EVENT_ERROR:
 				view.showError(String.format("Error occured during processing of message:%n%s%n%nStacktrace:%n%s",
-						message.getValues(kodeva.retrospective.controller.Constants.Messaging.Key.ERROR_ORIGINAL_MESSAGE).iterator().next(),
-						message.getValues(kodeva.retrospective.controller.Constants.Messaging.Key.ERROR_STACKTRACE).iterator().next()));;
+						message.getValue(kodeva.retrospective.controller.Constants.Messaging.Key.ERROR_ORIGINAL_MESSAGE),
+						message.getValue(kodeva.retrospective.controller.Constants.Messaging.Key.ERROR_STACKTRACE)));;
 				break;
 			}
 			break;

@@ -42,6 +42,14 @@ public class Model {
 	}
 
 	/**
+	 * @return
+	 *  current model version
+	 */
+	public int getModelVersion() {
+		return modelVersion;
+	}
+	
+	/**
 	 * Creates a new card on user desk.
 	 * @param card
 	 *  card instance

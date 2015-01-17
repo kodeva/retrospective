@@ -2,6 +2,7 @@ package kodeva.retrospective.messaging;
 
 import static org.junit.Assert.*;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
@@ -35,6 +36,22 @@ public class MessageBrokerTest {
 		}
 
 		try {
+			mb.unsubscribe(null, null);
+			fail();
+		} catch (NullPointerException e) {
+		}
+		try {
+			mb.unsubscribe(filterAll, null);
+			fail();
+		} catch (NullPointerException e) {
+		}
+		try {
+			mb.unsubscribe(null, processor);
+			fail();
+		} catch (NullPointerException e) {
+		}
+
+		try {
 			mb.sendMessage(null);
 			fail();
 		} catch (NullPointerException e) {
@@ -42,10 +59,45 @@ public class MessageBrokerTest {
 	}
 	
 	@Test
-	public void testSimpleFilters() {
+	public void testSimpleFiltersSingleThreaded() {
+		testSimpleFilters(new MessageBroker());
+	}
+	
+	@Test
+	public void testSimpleFiltersMultiThreaded() {
 		final MessageBroker mb = new MessageBroker();
+		final int threadsCount = 5;
+		final CountDownLatch counter = new CountDownLatch(threadsCount);
+		for (int i = 1; i <= threadsCount; i++) {
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						testSimpleFilters(mb);
+					} finally {
+						counter.countDown();
+					}
+				}
+			}).start();
+		}
 
+		try {
+			counter.await();
+		} catch (InterruptedException e) {
+		}
+	}
+
+	private static void testSimpleFilters(final MessageBroker mb) {
 		final MessageFilter filterAll = new MessageFilter.Builder().build();
+
+		final MessageProcessor processorFailFirst = new MessageProcessor() {
+			@Override
+			public void process(Message message) {
+				throw new RuntimeException("Just failing as first...");
+			}
+		};
+		mb.subscribe(filterAll, processorFailFirst);
+		
 		final AtomicInteger counterAll = new AtomicInteger(0);
 		final MessageProcessor processorAll = new MessageProcessor() {
 			@Override
@@ -55,6 +107,14 @@ public class MessageBrokerTest {
 		};
 		mb.subscribe(filterAll, processorAll);
 
+		final MessageProcessor processorFailLast = new MessageProcessor() {
+			@Override
+			public void process(Message message) {
+				throw new RuntimeException("Just failing as last...");
+			}
+		};
+		mb.subscribe(filterAll, processorFailLast);
+		
 		final String sender2 = "sender-2";
 		final MessageFilter filterSender2 = new MessageFilter.Builder().sender(sender2).build();
 		final AtomicInteger counterSender2 = new AtomicInteger(0);
@@ -76,5 +136,18 @@ public class MessageBrokerTest {
 		}
 		assertEquals(count * 2, counterAll.get());
 		assertEquals(count, counterSender2.get());
+
+		// Unsubscribe and test that no message was processed
+		mb.unsubscribe(filterAll, processorFailFirst);
+		mb.unsubscribe(filterAll, processorAll);
+		mb.unsubscribe(filterAll, processorFailLast);
+		mb.unsubscribe(filterSender2, processorSender2);
+		
+		final int counterAllCurrent = counterAll.get();
+		final int counterSender2Current = counterSender2.get();
+		mb.sendMessage(messageFromSender1);
+		mb.sendMessage(messageFromSender2);
+		assertEquals(counterAllCurrent, counterAll.get());
+		assertEquals(counterSender2Current, counterSender2.get());
 	}
 }
