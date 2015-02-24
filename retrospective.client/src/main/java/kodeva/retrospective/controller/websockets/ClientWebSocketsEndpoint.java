@@ -41,7 +41,6 @@ public class ClientWebSocketsEndpoint {
     @OnClose
     public void onClose(Session session, CloseReason closeReason) {
     	close();
-    	//TODO: send notification message that session was terminated (to local view - to notify user)
     }
     
     public ClientWebSocketsEndpoint(MessageBroker messageBroker) {

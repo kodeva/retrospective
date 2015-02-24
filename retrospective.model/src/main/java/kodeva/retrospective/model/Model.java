@@ -1,5 +1,11 @@
 package kodeva.retrospective.model;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.HashMap;
@@ -250,6 +256,31 @@ public class Model {
 		return votesCount;
 	}
 
+	public final synchronized String serializeForSynchronization() {
+		//TODO 3: Method that increments model version and serializes pinwall, votes and model version into string - does not allow for concurrent operations
+		try {
+			final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			final ObjectOutputStream oos = new ObjectOutputStream(baos);
+			oos.writeObject(cardsOnPinWall.keySet());
+			oos.close();
+			return baos.toString(StandardCharsets.UTF_8.name());
+		} catch (IOException e) {
+			throw new RuntimeException("Cannot serialize model", e);
+		}
+	}
+	
+	public final synchronized void synchronize(final String modelStr) {
+		//TODO 6: Method that initializes model based on received string (serialized pinwall, votes)
+		try {
+			final ByteArrayInputStream bais = new ByteArrayInputStream(modelStr.getBytes(StandardCharsets.UTF_8.name()));
+			final ObjectInputStream ois = new ObjectInputStream(bais);
+			Set<Card> cards = (Set<Card>) ois.readObject();
+			ois.close();
+		} catch (Exception e) {
+			throw new RuntimeException("Cannot deserialize model", e);
+		}
+	}
+	
 	/**
 	 * @return
 	 *  Pin wall entity.

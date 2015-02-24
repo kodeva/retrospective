@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,6 +36,8 @@ public class ServerWebSocketsEndpoint {
     		LOGGER.info(String.format("Openned session '%s'", session.getId()));
     	}
 		sessions.add(session);
+    	messageBroker.sendMessage(new Message.Builder().sender(Constants.Messaging.SENDER).receiver(session.getId()).
+    			entry(new SimpleImmutableEntry<>(Constants.Messaging.Key.EVENT, Constants.Messaging.Value.KEY_EVENT_MODEL_SYNC_REQUEST)).build());
     }
  
     @OnMessage
@@ -52,7 +55,6 @@ public class ServerWebSocketsEndpoint {
     	}
     	if (sessions != null) {
     		sessions.remove(session);
-        	//TODO: send notification message that session was terminated (to all existing session - to refresh participants list)
     	}
     }
 

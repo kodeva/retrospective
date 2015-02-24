@@ -17,7 +17,7 @@ import kodeva.retrospective.model.Model;
  */
 public class ClientController extends BaseController {
 	private ClientWebSocketsEndpoint clientEndpoint;
-	private final MessageFilter viewFilter, controllerFilter;
+	private final MessageFilter viewFilter, controllerFilterRemote, controllerFilterLocal;
 	private final Model model;
 	
 	public ClientController(MessageBroker messageBroker, Model model) {
@@ -25,15 +25,17 @@ public class ClientController extends BaseController {
 		this.model = model;
 		clientEndpoint = new ClientWebSocketsEndpoint(this.messageBroker);
 		this.messageBroker.subscribe(viewFilter = new MessageFilter.Builder().sender(kodeva.retrospective.view.Constants.Messaging.SENDER).build(), this);
-		this.messageBroker.subscribe(controllerFilter = new MessageFilter.Builder().sender(kodeva.retrospective.controller.Constants.Messaging.SENDER).build().
-				and(new MessageFilter.Builder().key(kodeva.retrospective.controller.Constants.Messaging.Key.EVENT).build().not()), this);
+		this.messageBroker.subscribe(controllerFilterRemote = new MessageFilter.Builder().sender(kodeva.retrospective.controller.Constants.Messaging.SENDER).build()
+				.and(new MessageFilter.Builder().key(kodeva.retrospective.controller.Constants.Messaging.Key.EVENT).build().not()), this);
+		this.messageBroker.subscribe(controllerFilterLocal = new MessageFilter.Builder().key(kodeva.retrospective.controller.Constants.Messaging.Key.EVENT).value(kodeva.retrospective.controller.Constants.Messaging.Value.KEY_EVENT_MODEL_SYNC).build(), this);
 	}
 
 	public void close() {
 		clientEndpoint.close();
 		clientEndpoint = null;
 		messageBroker.unsubscribe(viewFilter, this);
-		messageBroker.unsubscribe(controllerFilter, this);
+		messageBroker.unsubscribe(controllerFilterRemote, this);
+		messageBroker.unsubscribe(controllerFilterLocal, this);
 	}
 	
 	@Override
@@ -60,27 +62,29 @@ public class ClientController extends BaseController {
 		case kodeva.retrospective.controller.Constants.Messaging.SENDER:
 			// Project model messages received over wire to local model changes
 			final String userDeskId = message.getValue(Constants.Messaging.Key.USER_DESK_ID);
-			final int modelVersion = Integer.valueOf(message.getValue(Constants.Messaging.Key.MODEL_VERSION));
-			if (modelVersion >= model.getModelVersion()) {
-				switch (message.getValue(kodeva.retrospective.model.Constants.Messaging.Key.EVENT)) {
-				case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_DELETE:
-					model.deleteCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
-					break;
-				case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_PUBLISH:
-					model.publishCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
-					break;
-				case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_UNPUBLISH:
-					model.unpublishCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
-					break;
-				case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_VOTE_ADD:
-					model.addVote(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
-					break;
-				case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_VOTE_REMOVE:
-					model.removeVote(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
-					break;
-				}
+			switch (message.getValue(kodeva.retrospective.model.Constants.Messaging.Key.EVENT)) {
+			case kodeva.retrospective.view.Constants.Messaging.Value.KEY_EVENT_CARD_DELETE:
+				model.deleteCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
+				break;
+			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_PUBLISH:
+				model.publishCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
+				break;
+			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_CARD_UNPUBLISH:
+				model.unpublishCard(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
+				break;
+			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_VOTE_ADD:
+				model.addVote(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
+				break;
+			case kodeva.retrospective.model.Constants.Messaging.Value.KEY_EVENT_VOTE_REMOVE:
+				model.removeVote(EntityMessageAdapter.toCardBuilder(message).build(), userDeskId);
+				break;
+			case kodeva.retrospective.controller.Constants.Messaging.Value.KEY_EVENT_MODEL_SYNC:
+				model.synchronize(message.getValue(kodeva.retrospective.controller.Constants.Messaging.Key.SERIALIZED_MODEL));
+				break;
 			}
 			break;
+			//TODO 0: wait until sync message is received from server after connection a store all messages into queue
+			//TODO 7: process all messages from the queue - drop those with old model version
 		}
 	}
 }

@@ -930,6 +930,8 @@ public class LocalControllerTest {
 	}
 
 	// Tests TODOs:
+	// - sync of model after connection to session (single operation, concurrent operations of multiple clients)
 	// - showing list of connected participants (after connect and disconnect)
 	// - concurrent run of multiple client producing events (in separate threads)
+	// - send notification message that session was terminated (to all existing session - to refresh participants list; and to local sessions list as well)
 }

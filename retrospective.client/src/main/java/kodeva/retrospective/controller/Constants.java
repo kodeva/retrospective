@@ -45,6 +45,11 @@ public final class Constants {
 			 * Message key for a client id.
 			 */
 			public static final String CLIENT_ID = SENDER + ":client:id";
+			
+			/**
+			 * Message key for a serialized model.
+			 */
+			public static final String SERIALIZED_MODEL = SENDER + ":serialized-model";
 		}
 
 		/**
@@ -58,6 +63,16 @@ public final class Constants {
 			 * Event message key for error.
 			 */
 			public static final String KEY_EVENT_ERROR = "error";
+			
+			/**
+			 * Event message key for model synchronization request.
+			 */
+			public static final String KEY_EVENT_MODEL_SYNC_REQUEST = "model-sync-request";
+			
+			/**
+			 * Event message key for model synchronization.
+			 */
+			public static final String KEY_EVENT_MODEL_SYNC = "model-sync";
 		}
 	}
 }

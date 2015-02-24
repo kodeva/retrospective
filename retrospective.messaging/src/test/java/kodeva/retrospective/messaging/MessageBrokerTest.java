@@ -1,10 +1,17 @@
 package kodeva.retrospective.messaging;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.hamcrest.Matchers;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class MessageBrokerTest {
@@ -68,12 +75,15 @@ public class MessageBrokerTest {
 		final MessageBroker mb = new MessageBroker();
 		final int threadsCount = 5;
 		final CountDownLatch counter = new CountDownLatch(threadsCount);
+		final Collection<Throwable> exceptions = Collections.synchronizedCollection(new ArrayList<Throwable>());
 		for (int i = 1; i <= threadsCount; i++) {
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
 					try {
 						testSimpleFilters(mb);
+					} catch (Throwable t) {
+						exceptions.add(t);
 					} finally {
 						counter.countDown();
 					}
@@ -85,10 +95,16 @@ public class MessageBrokerTest {
 			counter.await();
 		} catch (InterruptedException e) {
 		}
+		
+		for (Throwable t : exceptions) {
+			t.printStackTrace(System.err);
+		}
+		Assert.assertThat(exceptions, Matchers.empty());
 	}
 
 	private static void testSimpleFilters(final MessageBroker mb) {
-		final MessageFilter filterAll = new MessageFilter.Builder().build();
+		final String threadId = Long.toString(Thread.currentThread().getId());
+		final MessageFilter filterAll = new MessageFilter.Builder().key(threadId).build();
 
 		final MessageProcessor processorFailFirst = new MessageProcessor() {
 			@Override
@@ -116,7 +132,7 @@ public class MessageBrokerTest {
 		mb.subscribe(filterAll, processorFailLast);
 		
 		final String sender2 = "sender-2";
-		final MessageFilter filterSender2 = new MessageFilter.Builder().sender(sender2).build();
+		final MessageFilter filterSender2 = new MessageFilter.Builder().sender(sender2).build().and(new MessageFilter.Builder().key(threadId).build());
 		final AtomicInteger counterSender2 = new AtomicInteger(0);
 		final MessageProcessor processorSender2 = new MessageProcessor() {
 			@Override
@@ -126,8 +142,8 @@ public class MessageBrokerTest {
 		};
 		mb.subscribe(filterSender2, processorSender2);
 
-		final Message messageFromSender1 = new Message.Builder().sender("sender-1").build();
-		final Message messageFromSender2 = new Message.Builder().sender(sender2).build();
+		final Message messageFromSender1 = new Message.Builder().sender("sender-1").entry(new SimpleEntry<String, String>(threadId, "")).build();
+		final Message messageFromSender2 = new Message.Builder().sender(sender2).entry(new SimpleEntry<String, String>(threadId, "")).build();
 
 		final int count = 100;
 		for (int i = 0; i < count; i++) {
